@@ -2,6 +2,7 @@ import os
 import sqlite3
 import sys
 from pathlib import Path
+from typing import Dict, Any
 
 import yaml
 from langchain_core.runnables import RunnableConfig
@@ -22,11 +23,24 @@ except Exception as e:
 
 # primitives
 def load_css(filepath: Path) -> str:
+    """
+    Loads custom CSS from a file.
+
+    Args:
+        filepath (Path): The Path object pointing to the CSS file.
+
+    Returns:
+        str:
+            - The CSS string wrapped in an HTML style tag.
+
+    Raises:
+        MyException: If the CSS file cannot be read.
+    """
     try:
         logging.info(f"Loading CSS from {filepath}...")
 
         if filepath.exists():
-            res = f"<style>{filepath.read_text()}</style>"
+            res: str = f"<style>{filepath.read_text()}</style>"
             logging.info(f"CSS loaded from {filepath}.")
             return res
 
@@ -38,10 +52,23 @@ def load_css(filepath: Path) -> str:
         raise MyException(e, sys) from e
 
 
-def get_llm(params) -> ChatGoogleGenerativeAI:
+def get_llm(params: Dict[str, Any]) -> ChatGoogleGenerativeAI:
+    """
+    Initializes and returns the ChatGoogleGenerativeAI instance.
+
+    Args:
+        params (Dict[str, Any]): Dictionary containing LLM configuration parameters.
+
+    Returns:
+        ChatGoogleGenerativeAI:
+            - The configured language model instance.
+
+    Raises:
+        MyException: If initializing the LLM fails.
+    """
     try:
         logging.info("Initializing LLM...")
-        res = ChatGoogleGenerativeAI(**params)
+        res: ChatGoogleGenerativeAI = ChatGoogleGenerativeAI(**params)
 
         logging.info("LLM initialized.")
         return res
@@ -51,13 +78,27 @@ def get_llm(params) -> ChatGoogleGenerativeAI:
         raise MyException(e, sys) from e
 
 
-def get_embeddings(params):
+def get_embeddings(params: Dict[str, Any]) -> GoogleGenerativeAIEmbeddings:
+    """
+    Initializes and returns the GoogleGenerativeAIEmbeddings instance.
+
+    Args:
+        params (Dict[str, Any]): Dictionary containing embedding configuration parameters.
+
+    Returns:
+        GoogleGenerativeAIEmbeddings:
+            - The configured embeddings instance.
+
+    Raises:
+        MyException: If initializing the embeddings model fails.
+    """
     try:
         logging.info("Initializing Embedding Model...")
-        res = GoogleGenerativeAIEmbeddings(**params)
+        res: GoogleGenerativeAIEmbeddings = GoogleGenerativeAIEmbeddings(**params)
 
         logging.info("Embedding Model initialized.")
         return res
+
     except Exception as e:
         logging.error(f"Failed to initialize Embedding Model: {e}")
         raise MyException(e, sys) from e
@@ -65,17 +106,31 @@ def get_embeddings(params):
 
 # database
 def get_conn(db_path: str) -> sqlite3.Connection:
+    """
+    Establishes a connection to a SQLite database.
+
+    Args:
+        db_path (str): The file path to the SQLite database.
+
+    Returns:
+        sqlite3.Connection:
+            - The active database connection object.
+
+    Raises:
+        MyException: If connecting to the database fails.
+    """
     try:
         logging.info(f"Connecting to database at {db_path}...")
-        path = ROOT_DIR / db_path
+        path: Path = ROOT_DIR / db_path
         path.parent.mkdir(parents=True, exist_ok=True)
 
-        conn = sqlite3.connect(
+        conn: sqlite3.Connection = sqlite3.connect(
             database=str(path),
             check_same_thread=False,
         )
         logging.info(f"Connected to database at {db_path}.")
         return conn
+
     except Exception as e:
         logging.error(f"Failed to connect to database at {db_path}: {e}")
         raise MyException(e, sys) from e
@@ -83,8 +138,23 @@ def get_conn(db_path: str) -> sqlite3.Connection:
 
 # runnable
 def get_runnable_config(
-    thread_id: str, thread_name: str, user_id="default_user"
+    thread_id: str, thread_name: str, user_id: str = "default_user"
 ) -> RunnableConfig:
+    """
+    Constructs a LangGraph RunnableConfig object with session metadata.
+
+    Args:
+        thread_id (str): The unique identifier for the conversation thread.
+        thread_name (str): The title of the conversation thread.
+        user_id (str, optional): The ID of the user. Defaults to "default_user".
+
+    Returns:
+        RunnableConfig:
+            - The configuration object for LangGraph execution.
+
+    Raises:
+        MyException: If constructing the configuration fails.
+    """
 
     try:
         logging.info(

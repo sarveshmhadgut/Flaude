@@ -16,10 +16,12 @@ LOGS_DIR: str = "logs"
 
 def get_current_timestamp() -> str:
     """
-    Get the current timestamp formatted as 'day-month-year_hour-minute-second'.
+    Generates a formatted timestamp string for the current time.
+
 
     Returns:
-        str: Formatted current timestamp.
+        str:
+            - The current timestamp formatted as "YYYY-MM-DD_HH-MM-SS".
 
     Raises:
         MyException: If timestamp generation fails.
@@ -46,7 +48,12 @@ except Exception as e:
 
 def config_logger() -> None:
     """
-    Configures the root logger with a colored console handler and a rotating file handler.
+    Configures the global logging settings with console and file handlers.
+
+
+
+    Raises:
+        MyException: If configuring the logger fails.
     """
     try:
         logger: logging.Logger = logging.getLogger()

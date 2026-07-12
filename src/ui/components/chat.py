@@ -1,10 +1,12 @@
 import sys
+from typing import Any, Dict, Generator, List, Optional, Tuple
 from uuid import uuid1
 
 import streamlit as st
 from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage, ToolMessage
-from langgraph.types import Command
-from langsmith import get_current_run_tree, traceable
+from langchain_core.runnables.config import RunnableConfig
+from langgraph.types import Command, StateSnapshot
+from langsmith import RunTree, get_current_run_tree, traceable
 
 from src.core.capabilities.title_gen import generate_title
 from src.core.workflow.graph import workflow
@@ -14,7 +16,17 @@ from src.infra.database import save_file
 from src.logger import logging
 
 
-def display_messages(messages):
+def display_messages(messages: List[Dict[str, Any]]) -> None:
+    """
+    Renders a list of chat messages to the Streamlit UI.
+
+    Args:
+        messages (List[Dict[str, Any]]): A list of message dictionaries, each containing "role" and "content" keys.
+
+
+    Raises:
+        MyException: If displaying the messages fails.
+    """
     try:
         logging.info("Executing display_messages...")
 
@@ -36,11 +48,32 @@ def display_messages(messages):
 
 
 def stream_chat(
-    user_input, config, stream_mode="messages", status_holder=None, resume=None
-):
+    user_input: Optional[str],
+    config: RunnableConfig,
+    stream_mode: str = "messages",
+    status_holder: Optional[Dict[str, Any]] = None,
+    resume: Optional[str] = None,
+) -> Generator[str, None, None]:
+    """
+    Streams chunks of AI responses from the LangGraph workflow.
+
+    Args:
+        user_input (Optional[str]): The text input provided by the user.
+        config (RunnableConfig): Configuration dictionary for the LangGraph workflow execution.
+        stream_mode (str, optional): The mode of streaming to use. Defaults to "messages".
+        status_holder (Optional[Dict[str, Any]], optional): Dictionary holding the UI status box for tool executions. Defaults to None.
+        resume (Optional[str], optional): The workflow state ID to resume from. Defaults to None.
+
+    Returns:
+        Generator[str, None, None]:
+            - Streams string chunks of the AI's generated response content.
+
+    Raises:
+        MyException: If the workflow streaming process encounters an error.
+    """
     try:
         logging.info("Executing stream_chat...")
-        input_data = (
+        input_data: Command[Tuple] | Dict[str, List[HumanMessage]] = (
             Command(resume=resume)
             if resume is not None
             else {
@@ -71,9 +104,9 @@ def stream_chat(
                     else ""
                 )
 
-            if isinstance(message_chunk, ToolMessage):
-                tool_name = getattr(message_chunk, "name", "tool")
-                if status_holder["box"] is None:
+            if isinstance(message_chunk, ToolMessage) and status_holder is not None:
+                tool_name: str = getattr(message_chunk, "name", "tool")
+                if status_holder.get("box") is None:
                     status_holder["box"] = st.status(
                         f"Using `{tool_name}` …", expanded=True
                     )
@@ -84,19 +117,39 @@ def stream_chat(
                         expanded=True,
                     )
         logging.info("stream_chat execution complete.")
+
     except Exception as e:
         logging.error(f"Error in stream_chat: {e}")
         raise MyException(e, sys) from e
 
 
 @traceable(name="flaude_run")
-def handle_input(user_input, files=None, resume=None):
+def handle_input(
+    user_input: Optional[str],
+    files: Optional[List[Any]] = None,
+    resume: Optional[str] = None,
+) -> bool:
+    """
+    Processes the user input, manages file uploads, and orchestrates the chat flow.
+
+    Args:
+        user_input (Optional[str]): The text input submitted by the user.
+        files (Optional[List[Any]], optional): List of uploaded files to process and save. Defaults to None.
+        resume (Optional[str], optional): The state to resume from, if recovering from an interruption. Defaults to None.
+
+    Returns:
+        bool:
+            - True if a Streamlit app rerun is required, False otherwise.
+
+    Raises:
+        MyException: If handling the input or streaming the response fails.
+    """
     try:
         logging.info("Executing handle_input...")
         need_rerun = False
 
         if files:
-            file = files[0] if isinstance(files, list) else files
+            file = files[0] if isinstance(files, List) else files
 
             with st.chat_message("assistant"):
                 save_file(file)
@@ -117,23 +170,24 @@ def handle_input(user_input, files=None, resume=None):
                     unsafe_allow_html=True,
                 )
 
-        thread_id = st.session_state["current_thread"]
-        thread_name = st.session_state["thread_mapping"].get(
+        thread_id: str = st.session_state["current_thread"]
+        thread_name: str = st.session_state["thread_mapping"].get(
             thread_id, f"Conversation {thread_id[:8]}"
         )
 
-        run_tree = get_current_run_tree()
+        run_tree: RunTree | None = get_current_run_tree()
         if run_tree:
             run_tree.add_metadata({"thread_id": thread_id})
 
-        config = get_runnable_config(
+        config: RunnableConfig = get_runnable_config(
             thread_id=thread_id,
             thread_name=thread_name,
             user_id=st.session_state.get("user_id", "default_user"),
         )
+
         with st.chat_message("assistant"):
-            tool_block = {"box": None}
-            ai_message = st.write_stream(
+            tool_block: Dict[str, Any] = {"box": None}
+            ai_message: List[Any] | str = st.write_stream(
                 stream_chat(
                     user_input=user_input,
                     config=config,
@@ -170,18 +224,22 @@ def handle_input(user_input, files=None, resume=None):
                 {"role": "assistant", "content": ai_message}
             )
 
-        state = workflow.get_state(config)
-        is_interrupted = len(state.tasks) > 0 and bool(state.tasks[0].interrupts)
+        state: StateSnapshot = workflow.get_state(config)
+        is_interrupted: bool = len(state.tasks) > 0 and bool(state.tasks[0].interrupts)
+
         if is_interrupted != st.session_state.get("awaiting_approval", False):
             st.session_state["awaiting_approval"] = is_interrupted
+
             if is_interrupted:
                 try:
                     interrupt_val = state.tasks[0].interrupts[0].value
                     st.session_state["required_tools"] = interrupt_val.get(
                         "required_tools", []
                     )
+
                 except Exception:
                     st.session_state["required_tools"] = []
+
             need_rerun = True
 
         if run_tree:
@@ -190,7 +248,7 @@ def handle_input(user_input, files=None, resume=None):
         if not st.session_state["thread_mapping"].get(
             st.session_state["current_thread"]
         ):
-            new_title = generate_title(
+            new_title: str = generate_title(
                 thread_id=st.session_state["current_thread"],
                 conversation_history=st.session_state["messages"][:2],
             )
@@ -202,6 +260,7 @@ def handle_input(user_input, files=None, resume=None):
 
         logging.info("handle_input execution complete.")
         return need_rerun
+
     except Exception as e:
         logging.error(f"Error in handle_input: {e}")
         raise MyException(e, sys) from e

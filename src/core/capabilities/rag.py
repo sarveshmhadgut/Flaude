@@ -3,11 +3,13 @@ from pathlib import Path
 from typing import Any, Dict
 
 import chromadb
-from langchain_core.vectorstores.base import VectorStoreRetriever
 import streamlit as st
 import yaml
 from langchain_chroma import Chroma
 from langchain_community.document_loaders import PyPDFLoader, TextLoader
+from langchain_core.documents.base import Document
+from langchain_core.vectorstores.base import VectorStoreRetriever
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_text_splitters import Language, RecursiveCharacterTextSplitter
 from langsmith import traceable
 
@@ -16,7 +18,7 @@ from src.infra.config import ROOT_DIR, get_embeddings
 from src.logger import logging
 
 try:
-    LANGUAGE_MAP = {
+    LANGUAGE_MAP: Dict[str, Language] = {
         ".md": Language.MARKDOWN,
         ".py": Language.PYTHON,
         ".java": Language.JAVA,
@@ -36,6 +38,19 @@ except Exception as e:
 
 
 def get_retriever(thread_id: str) -> VectorStoreRetriever:
+    """
+    Configures and retrieves a VectorStoreRetriever for a specific thread.
+
+    Args:
+        thread_id (str): The unique identifier for the conversation thread.
+
+    Returns:
+        VectorStoreRetriever:
+            - The configured retriever instance for the thread.
+
+    Raises:
+        MyException: If configuring the retriever fails.
+    """
     try:
         logging.info(f"Configuring retriever for thread {thread_id}...")
         if thread_id in st.session_state["retrievers"]:
@@ -45,14 +60,18 @@ def get_retriever(thread_id: str) -> VectorStoreRetriever:
             )
             return res
 
-        embeddings = get_embeddings(params=PARAMS_CONFIGS.get("EMBEDDINGS", {}))
-        vector_store = Chroma(
+        embeddings: GoogleGenerativeAIEmbeddings = get_embeddings(
+            params=PARAMS_CONFIGS.get("EMBEDDINGS", {})
+        )
+        vector_store: Chroma = Chroma(
             collection_name=thread_id,
             embedding_function=embeddings,
             persist_directory=VECTOR_DB_PATH,
         )
 
-        retriever = vector_store.as_retriever(**PARAMS_CONFIGS.get("RETRIEVER", {}))
+        retriever: VectorStoreRetriever = vector_store.as_retriever(
+            **PARAMS_CONFIGS.get("RETRIEVER", {})
+        )
         st.session_state["retrievers"][thread_id] = retriever
 
         logging.info(f"Retriever configured for thread {thread_id}.")
@@ -67,15 +86,31 @@ def get_retriever(thread_id: str) -> VectorStoreRetriever:
 def ingestion_pipeline(
     filepath: str, chunk_size: int, chunk_overlap: int
 ) -> Dict[str, Any]:
+    """
+    Processes and ingests a document into the vector store.
+
+    Args:
+        filepath (str): The absolute path to the file being ingested.
+        chunk_size (int): The maximum size of each text chunk.
+        chunk_overlap (int): The number of overlapping characters between chunks.
+
+    Returns:
+        Dict[str, Any]:
+            - Metadata describing the ingestion result, including "num_chunks".
+
+    Raises:
+        MyException: If the document ingestion process fails.
+    """
     try:
         logging.info(f"Starting ingestion pipeline for {filepath}...")
-        current_thread = st.session_state["current_thread"]
-        ext = Path(filepath).suffix.lower()
+
+        current_thread: str = st.session_state["current_thread"]
+        ext: str = Path(filepath).suffix.lower()
 
         if ext == ".pdf":
-            loader = PyPDFLoader(file_path=filepath)
-            docs = loader.load()
-            splitter = RecursiveCharacterTextSplitter(
+            loader: PyPDFLoader = PyPDFLoader(file_path=filepath)
+            docs: list[Document] = loader.load()
+            splitter: RecursiveCharacterTextSplitter = RecursiveCharacterTextSplitter(
                 chunk_size=chunk_size,
                 chunk_overlap=chunk_overlap,
                 separators=["\n\n", "\n", " ", ""],
@@ -97,24 +132,28 @@ def ingestion_pipeline(
                     separators=["\n\n", "\n", " ", ""],
                 )
 
-        chunks = splitter.split_documents(documents=docs)
-
-        embeddings = get_embeddings(params=PARAMS_CONFIGS.get("EMBEDDINGS", {}))
+        chunks: list[Document] = splitter.split_documents(documents=docs)
+        embeddings: GoogleGenerativeAIEmbeddings = get_embeddings(
+            params=PARAMS_CONFIGS.get("EMBEDDINGS", {})
+        )
 
         try:
-            client = chromadb.PersistentClient(path=VECTOR_DB_PATH)
+            client: chromadb.ClientAPI = chromadb.PersistentClient(path=VECTOR_DB_PATH)
             client.delete_collection(name=current_thread)
+
         except Exception as e:
             logging.warning(f"Bypassed collection deletion: {e}")
 
-        vector_store = Chroma.from_documents(
+        vector_store: Chroma = Chroma.from_documents(
             documents=chunks,
             embedding=embeddings,
             persist_directory=VECTOR_DB_PATH,
             collection_name=current_thread,
         )
 
-        retriever = vector_store.as_retriever(**PARAMS_CONFIGS.get("RETRIEVER", {}))
+        retriever: VectorStoreRetriever = vector_store.as_retriever(
+            **PARAMS_CONFIGS.get("RETRIEVER", {})
+        )
 
         st.session_state["retrievers"][current_thread] = retriever
         st.session_state["metadatas"][current_thread] = {

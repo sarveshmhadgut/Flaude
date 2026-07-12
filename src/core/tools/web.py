@@ -12,7 +12,8 @@ from src.logger import logging
 
 try:
     load_dotenv()
-    EXCHANGE_RATE_KEY = os.getenv("EXCHANGE_RATE_KEY")
+    EXCHANGE_RATE_KEY: str | None = os.getenv("EXCHANGE_RATE_KEY")
+
 except Exception as e:
     raise MyException(e, sys) from e
 
@@ -21,16 +22,22 @@ except Exception as e:
 def web_search(search_query: str) -> Dict[str, Any]:
     """
     Search the web for information related to a query.
+
     Args:
-        search_query: Search query.
+        search_query (str): The search query to look up on the web.
+
     Returns:
-        A dictionary containing the search results.
+        Dict[str, Any]:
+            - A dictionary containing the search results.
+
+    Raises:
+        MyException: If the web search process fails.
     """
     try:
         logging.info(f"Executing web_search tool for {search_query}...")
 
-        engine = DuckDuckGoSearchRun()
-        res = engine.invoke(search_query)
+        engine: DuckDuckGoSearchRun = DuckDuckGoSearchRun()
+        res: Any = engine.invoke(search_query)
 
         logging.info(f"Finished executing web_search tool for {search_query}.")
         return {
@@ -47,9 +54,18 @@ def web_search(search_query: str) -> Dict[str, Any]:
 @tool(name_or_callable="get_conversion_rate")
 def get_conversion_rate(base_currency: str, target_currency: str) -> Dict[str, Any]:
     """
-    MUST be used to get real-time, up-to-date currency exchange rates.
-    Do NOT guess or approximate rates.
-    Always call this tool when asked for current conversion rates.
+    Fetches real-time, up-to-date currency exchange rates for a currency pair.
+
+    Args:
+        base_currency (str): The currency to convert from (e.g., 'USD').
+        target_currency (str): The currency to convert to (e.g., 'EUR').
+
+    Returns:
+        Dict[str, Any]:
+            - A dictionary containing the exchange rate data or an error message.
+
+    Raises:
+        MyException: If the API request fails or the key is missing.
     """
     try:
         logging.info(
@@ -58,12 +74,12 @@ def get_conversion_rate(base_currency: str, target_currency: str) -> Dict[str, A
         if not EXCHANGE_RATE_KEY:
             raise ValueError("EXCHANGE_RATE_KEY not found")
 
-        URL = f"https://v6.exchangerate-api.com/v6/{EXCHANGE_RATE_KEY}/pair/{base_currency}/{target_currency}"
+        URL: str = f"https://v6.exchangerate-api.com/v6/{EXCHANGE_RATE_KEY}/pair/{base_currency}/{target_currency}"
 
-        res = requests.get(url=URL, timeout=10)
+        res: requests.Response = requests.get(url=URL, timeout=10)
         res.raise_for_status()
 
-        data = res.json()
+        data: Dict[str, Any] = res.json()
         if data["result"] != "success":
             raise ValueError(data.get("error-type", "Unknown API error"))
 

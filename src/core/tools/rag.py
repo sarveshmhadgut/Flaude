@@ -3,8 +3,11 @@ from typing import Any, Dict
 
 import yaml
 from langchain_chroma import Chroma
+from langchain_core.documents.base import Document
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import tool
+from langchain_core.vectorstores.base import VectorStoreRetriever
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
 from src.exception import MyException
 from src.infra.config import ROOT_DIR, get_embeddings
@@ -22,25 +25,38 @@ except Exception as e:
 @tool(name_or_callable="rag")
 def rag_tool(query: str, config: RunnableConfig) -> Dict[str, Any]:
     """
-    Search the document database for information related to the query.
+    Executes a Retrieval-Augmented Generation (RAG) query against the active vector database.
+
     Args:
-        query: Search query for the RAG database.
+        query (str): The search query to retrieve information for.
+        config (RunnableConfig): Execution configuration containing the thread ID.
+
+    Returns:
+        Dict[str, Any]:
+            - A dictionary containing the retrieved text or an error message.
+
+    Raises:
+        MyException: If the RAG retrieval process fails.
     """
     try:
         logging.info(f"Executing rag_tool for {query}...")
 
-        current_thread = config["configurable"]["thread_id"]
-        embeddings = get_embeddings(params=PARAMS_CONFIGS.get("EMBEDDINGS", {}))
-        vector_store = Chroma(
+        current_thread: str = config["configurable"]["thread_id"]
+        embeddings: GoogleGenerativeAIEmbeddings = get_embeddings(
+            params=PARAMS_CONFIGS.get("EMBEDDINGS", {})
+        )
+        vector_store: Chroma = Chroma(
             collection_name=current_thread,
             embedding_function=embeddings,
             persist_directory=VECTOR_DB_PATH,
         )
-        retriever = vector_store.as_retriever(**PARAMS_CONFIGS.get("RETRIEVER", {}))
+        retriever: VectorStoreRetriever = vector_store.as_retriever(
+            **PARAMS_CONFIGS.get("RETRIEVER", {})
+        )
 
-        res = retriever.invoke(input=query)
-        content = [doc.page_content for doc in res]
-        metadata = [doc.metadata for doc in res]
+        res: list[Document] = retriever.invoke(input=query)
+        content: list[str] = [doc.page_content for doc in res]
+        metadata: list[Dict[Any, Any]] = [doc.metadata for doc in res]
 
         logging.info(f"Finished executing rag_tool for {query}.")
         return {

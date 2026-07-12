@@ -5,6 +5,8 @@ import yaml
 from dotenv import load_dotenv
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables.base import Runnable, RunnableSerializable
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 from src.core.capabilities.memory import DecisionSchema
 from src.core.tools import available_tools
@@ -19,29 +21,29 @@ try:
     DB_URI = os.getenv(key="DB_URI")
 
     # model
-    MODEL = get_llm(params=PARAMS_CONFIGS.get("LLM", {}))
-    BOUND_MODEL = MODEL.bind_tools(tools=available_tools)
-    PARSER = StrOutputParser()
+    MODEL: ChatGoogleGenerativeAI = get_llm(params=PARAMS_CONFIGS.get("LLM", {}))
+    BOUND_MODEL: Runnable = MODEL.bind_tools(tools=available_tools)
+    PARSER: StrOutputParser = StrOutputParser()
 
     # memory prompt
-    MEMORY_PROMPT = ChatPromptTemplate(
+    MEMORY_PROMPT: ChatPromptTemplate = ChatPromptTemplate(
         [
             ("system", PROMPTS_CONFIGS["MEMORY"]["SYSTEM"]),
             ("user", PROMPTS_CONFIGS["MEMORY"]["USER"]),
         ]
     )
-    MEMORY_MODEL = MODEL.with_structured_output(schema=DecisionSchema)
-    MEMORY_CHAIN = MEMORY_PROMPT | MEMORY_MODEL
+    MEMORY_MODEL: Runnable = MODEL.with_structured_output(schema=DecisionSchema)
+    MEMORY_CHAIN: RunnableSerializable = MEMORY_PROMPT | MEMORY_MODEL
 
     # chat prompt
-    CHAT_PROMPT = ChatPromptTemplate(
+    CHAT_PROMPT: ChatPromptTemplate = ChatPromptTemplate(
         [
             ("system", PROMPTS_CONFIGS.get("CHAT", {}).get("SYSTEM")),
             ("user", PROMPTS_CONFIGS.get("CHAT", {}).get("USER")),
             ("placeholder", "{messages}"),
         ]
     )
-    CHAT_CHAIN = CHAT_PROMPT | BOUND_MODEL
+    CHAT_CHAIN: RunnableSerializable = CHAT_PROMPT | BOUND_MODEL
 
     # summary prompt and chain
     SUMMARY_PROMPT = ChatPromptTemplate(
@@ -51,7 +53,7 @@ try:
             ("user", PROMPTS_CONFIGS.get("SUMMARIZE", {}).get("USER")),
         ]
     )
-    SUMMARY_CHAIN = SUMMARY_PROMPT | MODEL | PARSER
+    SUMMARY_CHAIN: RunnableSerializable = SUMMARY_PROMPT | MODEL | PARSER
 
 
 except Exception as e:

@@ -1,5 +1,7 @@
 import os
 import sys
+from sqlite3 import Connection, Cursor
+from typing import Any, Dict, List
 
 import streamlit as st
 import yaml
@@ -19,11 +21,22 @@ except Exception as e:
     raise MyException(e, sys) from e
 
 
-def load_conversations():
+def load_conversations() -> List[str]:
+    """
+    Loads a list of available conversation thread IDs from the database.
+
+
+    Returns:
+        List[str]:
+            - A list of conversation thread IDs.
+
+    Raises:
+        MyException: If the database operation fails.
+    """
     try:
         logging.info("Retrieving conversation history from database...")
 
-        threads = list(
+        threads: List[str] = list(
             {
                 checkpoint.config["configurable"]["thread_id"]
                 for checkpoint in checkpointer.list(None)
@@ -38,17 +51,28 @@ def load_conversations():
         raise MyException(e, sys) from e
 
 
-def load_thread_mapping():
+def load_thread_mapping() -> Dict[str, str]:
+    """
+    Loads a mapping of thread IDs to their generated titles.
+
+
+    Returns:
+        Dict[str, str]:
+            - A dictionary mapping thread IDs to title strings.
+
+    Raises:
+        MyException: If the database operation fails.
+    """
     try:
         logging.info("Retrieving thread mappings from database...")
-        conn = get_conn(
+        conn: Connection = get_conn(
             db_path=PARAMS_CONFIGS.get("FILES", {}).get("MAPPING_DB_FILEPATH")
         )
-        cursor = conn.cursor()
+        cursor: Cursor = conn.cursor()
 
         cursor.execute(PROMPTS_CONFIGS.get("CREATE_TABLE"))
         cursor.execute(PROMPTS_CONFIGS.get("LOAD_ROWS"))
-        thread_mappings = dict(cursor.fetchall())
+        thread_mappings: Dict[str, str] = dict(cursor.fetchall())
 
         conn.commit()
         logging.info("Thread mappings retrieved.")
@@ -59,13 +83,25 @@ def load_thread_mapping():
         raise MyException(e, sys) from e
 
 
-def save_row(thread_id, thread_name):
+def save_row(thread_id: str, thread_name: str) -> None:
+    """
+    Saves or updates a conversation thread and its title in the database.
+
+    Args:
+        thread_id (str): The unique identifier for the conversation thread.
+        thread_name (str): The title of the conversation thread.
+
+
+    Raises:
+        MyException: If the database save operation fails.
+    """
     try:
         logging.info(f"Inserting thread mapping into database for {thread_name}...")
-        conn = get_conn(
+
+        conn: Connection = get_conn(
             db_path=PARAMS_CONFIGS.get("FILES", {}).get("MAPPING_DB_FILEPATH")
         )
-        cursor = conn.cursor()
+        cursor: Cursor = conn.cursor()
 
         cursor.execute(PROMPTS_CONFIGS.get("CREATE_TABLE"))
         cursor.execute(
@@ -73,6 +109,7 @@ def save_row(thread_id, thread_name):
             (thread_id, thread_name),
         )
         conn.commit()
+
         logging.info(f"Thread mapping inserted for {thread_name}.")
 
     except Exception as e:
@@ -80,7 +117,17 @@ def save_row(thread_id, thread_name):
         raise MyException(e, sys) from e
 
 
-def save_file(file):
+def save_file(file: Any) -> None:
+    """
+    Saves an uploaded file to the local storage directory.
+
+    Args:
+        file (Any): The Streamlit UploadedFile object.
+
+
+    Raises:
+        MyException: If saving the file to disk fails.
+    """
     try:
         if file:
             logging.info(f"Saving uploaded file locally: {file.name}...")
@@ -95,7 +142,7 @@ def save_file(file):
                 f.write(file.getbuffer())
 
             with st.status(f"Processing `{file.name}` ...", expanded=True) as status:
-                results = ingestion_pipeline(
+                results: Dict[str, Any] = ingestion_pipeline(
                     filepath=str(filepath),
                     **PARAMS_CONFIGS.get("INGESTION_PIPELINE", {}),
                 )
@@ -108,8 +155,10 @@ def save_file(file):
                     )
                     try:
                         os.remove(filepath)
+
                     except Exception as e:
                         st.warning(f"Could not delete temporary file: {e}")
+
                 else:
                     status.update(
                         label=f"Error processing `{file.name}`!", state="error"

@@ -1,10 +1,13 @@
 # imports & setups
 import os
 import sys
+from typing import Any, List, Optional
 
 import streamlit as st
 import yaml
 from dotenv import load_dotenv
+from streamlit.elements.widgets.chat import ChatInputValue
+from streamlit.runtime.uploaded_file_manager import UploadedFile
 
 from src.exception import MyException
 from src.infra.config import ROOT_DIR, load_css
@@ -59,7 +62,7 @@ try:
 
     # approval UI
     if st.session_state.get("awaiting_approval", False):
-        required_tools = st.session_state.get("required_tools", [])
+        required_tools: List[Any] = st.session_state.get("required_tools", [])
         if required_tools:
             st.write(
                 f"The model requires tool approval before continuing. Required tools: `{', '.join(required_tools)}`"
@@ -67,11 +70,13 @@ try:
         else:
             st.write("The model requires tool approval before continuing.")
 
-        col1, col2, _ = st.columns([2, 2, 6])
         resume = None
+        col1, col2, _ = st.columns([2, 2, 6])
+
         with col1:
             if st.button("Approve", type="primary", use_container_width=True):
                 resume = True
+
         with col2:
             if st.button("Reject", use_container_width=True):
                 resume = False
@@ -80,7 +85,7 @@ try:
             st.rerun()
 
     # input field
-    user_input = st.chat_input(
+    user_input: ChatInputValue | None = st.chat_input(
         "Ask Flaude",
         accept_file=True,
         disabled=st.session_state.get("awaiting_approval", False),
@@ -92,11 +97,11 @@ try:
             text = user_input
 
         try:
-            files = user_input.files
+            files: Optional[List[UploadedFile]] = user_input.files
         except AttributeError:
             files = None
 
-        need_rerun = handle_input(user_input=text, files=files)
+        need_rerun: bool = handle_input(user_input=text, files=files)
 
         if need_rerun:
             st.rerun()

@@ -1,13 +1,14 @@
 [project]
 name = "flaude"
 version = "0.1.0"
-description = "Just a chatbot."
+description = "A chatbot that asks before it acts, remembers who you are, and looks things up instead of making them up."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "langgraph",
     "langchain",
     "langchain-google-genai",
+    "langsmith",
     "pydantic",
     "python-dotenv",
     "rich",
@@ -20,7 +21,6 @@ dependencies = [
     "networkx",
     "matplotlib",
     "catppuccin",
-    "pytest",
     "termcolor",
     "uuid",
     "streamlit",
@@ -32,4 +32,11 @@ dependencies = [
     "langgraph-checkpoint-postgres",
     "psycopg[binary,pool]",
     "colorlog>=6.10.1",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "ruff",
+    "mypy",
 ]

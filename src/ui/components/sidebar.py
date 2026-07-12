@@ -1,7 +1,11 @@
 import sys
+from typing import Any, List
 
 import streamlit as st
-from langchain_core.messages import AIMessage, HumanMessage
+from langchain_community.vectorstores import VectorStore
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
+from langchain_core.vectorstores.base import VectorStoreRetriever
+from langgraph.types import StateSnapshot
 
 from src.core.capabilities.rag import get_retriever
 from src.core.workflow.graph import workflow
@@ -10,19 +14,34 @@ from src.infra.config import get_runnable_config
 from src.logger import logging
 
 
-def load_conversation_history(thread_id):
+def load_conversation_history(thread_id: str) -> List[Any]:
+    """
+    Loads the message history for a specific conversation thread.
+
+    Args:
+        thread_id (str): The unique identifier for the conversation thread.
+
+    Returns:
+        List[Any]:
+            - A list of message objects loaded from the database.
+
+    Raises:
+        MyException: If loading the conversation history fails.
+    """
     try:
         logging.info(f"Executing load_conversation_history for {thread_id}...")
-        thread_name = st.session_state["thread_mapping"].get(
+        thread_name: str = st.session_state["thread_mapping"].get(
             thread_id, f"Conversation {thread_id[:8]}"
         )
-        state = workflow.get_state(
+
+        state: StateSnapshot = workflow.get_state(
             config=get_runnable_config(
                 thread_id=thread_id,
                 thread_name=thread_name,
                 user_id=st.session_state.get("user_id", "default_user"),
             )
         )
+
         logging.info(f"load_conversation_history execution complete for {thread_id}.")
         return state.values.get("messages", [])
 
@@ -31,11 +50,19 @@ def load_conversation_history(thread_id):
         raise MyException(e, sys) from e
 
 
-def render_conversations():
+def render_conversations() -> None:
+    """
+    Renders the conversation history list in the Streamlit sidebar.
+
+
+
+    Raises:
+        MyException: If rendering the conversations list fails.
+    """
     try:
         logging.info("Executing render_conversations...")
         for thread in reversed(st.session_state["threads"]):
-            title = st.session_state["thread_mapping"].get(thread, "")
+            title: str = st.session_state["thread_mapping"].get(thread, "")
 
             if title and st.sidebar.button(
                 title,
@@ -45,12 +72,12 @@ def render_conversations():
             ):
                 logging.info(f"Switching to conversation thread: {thread}...")
                 st.session_state["current_thread"] = thread
-                conversation_history = load_conversation_history(
+                conversation_history: List = load_conversation_history(
                     thread_id=st.session_state["current_thread"]
                 )
 
-                retriever = get_retriever(thread)
-                vector_store = retriever.vectorstore
+                retriever: VectorStoreRetriever = get_retriever(thread)
+                vector_store: VectorStore = retriever.vectorstore
 
                 if vector_store._collection.count() > 0:
                     db_data = vector_store.get(limit=1)
@@ -59,10 +86,10 @@ def render_conversations():
                         if db_data["metadatas"] and db_data["metadatas"][0]
                         else {}
                     )
-                    filepath = metadata.get("source", "Unknown Document")
+                    filepath: str = metadata.get("source", "Unknown Document")
                     st.session_state["metadatas"][thread] = {"filepath": filepath}
 
-                previous_messages = []
+                previous_messages: List[BaseMessage] = []
 
                 for message in conversation_history:
                     if isinstance(message, HumanMessage):
@@ -71,7 +98,7 @@ def render_conversations():
                         )
 
                     elif isinstance(message, AIMessage):
-                        content = message.content
+                        content: str = message.content
                         content = (
                             content
                             if isinstance(content, str)
@@ -89,6 +116,7 @@ def render_conversations():
 
                 st.session_state["messages"] = previous_messages
                 st.rerun()
+
         logging.info("render_conversations execution complete.")
 
     except Exception as e:
@@ -96,16 +124,24 @@ def render_conversations():
         raise MyException(e, sys) from e
 
 
-def render_active_documents():
+def render_active_documents() -> None:
+    """
+    Renders the active (uploaded) documents list in the Streamlit sidebar.
+
+
+
+    Raises:
+        MyException: If rendering the active documents list fails.
+    """
     try:
         logging.info("Executing render_active_documents...")
         st.sidebar.header("Active Documents")
 
-        current_thread = st.session_state["current_thread"]
+        current_thread: str = st.session_state["current_thread"]
         if current_thread in st.session_state.get("metadatas", {}):
             metadata = st.session_state["metadatas"][current_thread]
 
-            filename = metadata["filepath"].split("/")[-1]
+            filename: str = metadata["filepath"].split("/")[-1]
             st.sidebar.button(
                 filename,
                 icon=":material/description:",
@@ -115,17 +151,27 @@ def render_active_documents():
         else:
             st.sidebar.caption("No documents loaded for this conversation.")
         logging.info("render_active_documents execution complete.")
+
     except Exception as e:
         logging.error(f"Error in render_active_documents: {e}")
         raise MyException(e, sys) from e
 
 
-def render_sidebar():
+def render_sidebar() -> None:
+    """
+    Renders the entire sidebar interface including title, conversations, and documents.
+
+
+
+    Raises:
+        MyException: If rendering the sidebar fails.
+    """
     try:
         logging.info("Executing render_sidebar...")
         render_conversations()
         render_active_documents()
         logging.info("render_sidebar execution complete.")
+
     except Exception as e:
         logging.error(f"Error in render_sidebar: {e}")
         raise MyException(e, sys) from e

@@ -1,6 +1,6 @@
 import sys
 from datetime import datetime
-from typing import Any, Dict, Literal, Tuple
+from typing import Any, Dict, List, Literal, Tuple
 
 import streamlit as st
 from langchain_core.messages import AIMessage, HumanMessage, RemoveMessage
@@ -17,7 +17,12 @@ from src.core.agents.chains import (
     PARAMS_CONFIGS,
     SUMMARY_CHAIN,
 )
-from src.core.capabilities.memory import PostgresStore, get_memories, get_namespace
+from src.core.capabilities.memory import (
+    DecisionSchema,
+    PostgresStore,
+    get_memories,
+    get_namespace,
+)
 from src.core.tools import available_tools
 from src.core.workflow.state import MessagesState
 from src.exception import MyException
@@ -25,20 +30,37 @@ from src.logger import logging
 
 
 @traceable(name="memory")
-def memory(state: MessagesState, config: RunnableConfig, store: PostgresStore) -> Dict:
+def memory(
+    state: MessagesState, config: RunnableConfig, store: PostgresStore
+) -> Dict[str, Any]:
+    """
+    Executes the memory module to fetch and decide if memories need updating.
+
+    Args:
+        state (MessagesState): The current state of the workflow messages.
+        config (RunnableConfig): Execution configuration.
+        store (PostgresStore): The PostgreSQL store instance for memories.
+
+    Returns:
+        Dict[str, Any]:
+            - Returns a dictionary with updated messages or an empty dict.
+
+    Raises:
+        MyException: If the memory logic fails to execute.
+    """
     try:
         logging.info("Executing memory module...")
-        user_id = config["configurable"]["user_id"]
-        namespace = get_namespace(user_id=user_id)
+        user_id: str = config["configurable"]["user_id"]
+        namespace: Tuple[str, str] = get_namespace(user_id=user_id)
 
-        recent_message = next(
+        recent_message: Any = next(
             message.content
             for message in reversed(state["messages"])
             if isinstance(message, HumanMessage)
         )
-        current_memories = get_memories(namespace=namespace, store=store)
+        current_memories: str = get_memories(namespace=namespace, store=store)
 
-        res = MEMORY_CHAIN.invoke(
+        res: DecisionSchema = MEMORY_CHAIN.invoke(
             input={
                 "current_memories": current_memories,
                 "recent_message": recent_message,
@@ -76,22 +98,37 @@ def memory(state: MessagesState, config: RunnableConfig, store: PostgresStore) -
 def chat(
     state: MessagesState, config: RunnableConfig, store: PostgresStore
 ) -> Dict[str, Any]:
+    """
+    Executes the main chat logic, sending context and history to the LLM.
+
+    Args:
+        state (MessagesState): The current state of the workflow messages.
+        config (RunnableConfig): Execution configuration containing thread and user IDs.
+        store (PostgresStore): The PostgreSQL store instance for memories.
+
+    Returns:
+        Dict[str, Any]:
+            - A dictionary containing the newly generated AIMessage.
+
+    Raises:
+        MyException: If the chat interaction fails.
+    """
     try:
         logging.info("Processing chat interaction...")
 
-        thread_id = config["configurable"]["thread_id"]
-        user_id = config["configurable"]["user_id"]
+        thread_id: str = config["configurable"]["thread_id"]
+        user_id: str = config["configurable"]["user_id"]
 
-        namespace = get_namespace(user_id=user_id)
-        current_memories = get_memories(namespace=namespace, store=store)
+        namespace: Tuple[str, str] = get_namespace(user_id=user_id)
+        current_memories: str = get_memories(namespace=namespace, store=store)
 
         active_file = "None"
         if thread_id in st.session_state.get("metadatas", {}):
-            metadata = st.session_state["metadatas"][thread_id]
+            metadata: Dict[str, Any] = st.session_state["metadatas"][thread_id]
             if "filepath" in metadata:
                 active_file = metadata["filepath"].split("/")[-1]
 
-        res = CHAT_CHAIN.invoke(
+        res: AIMessage = CHAT_CHAIN.invoke(
             input={
                 "messages_summary": state.get("messages_summary", ""),
                 "active_document": active_file,
@@ -110,22 +147,38 @@ def chat(
         raise MyException(e, sys) from e
 
 
-use_tools = ToolNode(tools=available_tools)
+use_tools: ToolNode = ToolNode(tools=available_tools)
 
 
 @traceable(name="approve_tools")
 def approve_tools(
     state: MessagesState, config: RunnableConfig
 ) -> Command[Literal["use_tools", "__end__"]]:
+    """
+    Checks for tool calls and interrupts the workflow to ask for explicit user approval.
+
+    Args:
+        state (MessagesState): The current state containing the AI's tool call requests.
+        config (RunnableConfig): Execution configuration.
+
+    Returns:
+        Command[Literal["use_tools", "__end__"]]:
+            - A LangGraph Command routing to the tool execution node or ending the graph.
+
+    Raises:
+        MyException: If the approval step encounters an error.
+    """
     try:
         logging.info("Verifying tools execution approvals...")
-        recent_message = next(
+        recent_message: AIMessage = next(
             message
             for message in reversed(state["messages"])
             if isinstance(message, AIMessage)
         )
 
-        required_tools = [tool_call["name"] for tool_call in recent_message.tool_calls]
+        required_tools: List[str] = [
+            tool_call["name"] for tool_call in recent_message.tool_calls
+        ]
         approved = interrupt(
             {
                 "type": "approval",
@@ -150,11 +203,26 @@ def approve_tools(
 def summarize(
     state: MessagesState, config: RunnableConfig, store: PostgresStore
 ) -> Command[Tuple]:
+    """
+    Summarizes older messages in the conversation to conserve context length.
+
+    Args:
+        state (MessagesState): The current state of the workflow messages.
+        config (RunnableConfig): Execution configuration.
+        store (PostgresStore): The PostgreSQL store instance.
+
+    Returns:
+        Command[Tuple]:
+            - A Command that deletes old messages and appends the new summary.
+
+    Raises:
+        MyException: If summarization fails.
+    """
     try:
         logging.info("Summarizing message history...")
-        current_summary = state.get("messages_summary", "")
+        current_summary: str = state.get("messages_summary", "")
 
-        updated_summary = SUMMARY_CHAIN.invoke(
+        updated_summary: str = SUMMARY_CHAIN.invoke(
             input={
                 "messages": state["messages"][-4:],
                 "current_summary": current_summary,
@@ -181,9 +249,22 @@ def summarize(
 
 @traceable(name="route_summary")
 def route_summary(state: MessagesState) -> Command[Literal["summarize", "__end__"]]:
+    """
+    Routes the workflow to the summarize node if the conversation is getting too long.
+
+    Args:
+        state (MessagesState): The current state of the workflow messages.
+
+    Returns:
+        Command[Literal["summarize", "__end__"]]:
+            - A LangGraph Command directing to "summarize" or terminating the graph.
+
+    Raises:
+        MyException: If token counting or routing fails.
+    """
     try:
         logging.info("Evaluating message payload for summarization...")
-        current_tokens = count_tokens_approximately(messages=state["messages"])
+        current_tokens: int = count_tokens_approximately(messages=state["messages"])
 
         if current_tokens > PARAMS_CONFIGS.get("MAX_TOKENS", 4000):
             logging.info("Token threshold exceeded; routing to summarization module.")

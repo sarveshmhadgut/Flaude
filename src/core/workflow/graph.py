@@ -1,5 +1,4 @@
 import sys
-from typing import Any
 
 from langgraph.checkpoint.postgres import PostgresSaver
 from langgraph.graph import END, START, StateGraph
@@ -24,30 +23,48 @@ from src.logger import logging
 
 def compile_workflow(
     checkpointer: PostgresSaver, store: PostgresStore
-) -> CompiledStateGraph[Any]:
+) -> CompiledStateGraph:
+    """
+    Builds and compiles the main LangGraph state machine for the application.
+
+    Args:
+        checkpointer (PostgresSaver): The checkpoint saver for maintaining state.
+        store (PostgresStore): The PostgreSQL store instance for long-term memory.
+
+    Returns:
+        CompiledStateGraph:
+            - The fully compiled and runnable LangGraph workflow.
+
+    Raises:
+        MyException: If the graph compilation process fails.
+    """
     try:
         logging.info("Compiling graph workflow...")
 
         # tools workflow
-        tools_subgraph = StateGraph(MessagesState)
+        tools_subgraph: StateGraph = StateGraph(MessagesState)
         tools_subgraph.add_node(node="approve_tools", action=approve_tools)
         tools_subgraph.add_node(node="use_tools", action=use_tools)
 
         tools_subgraph.add_edge(start_key=START, end_key="approve_tools")
         tools_subgraph.add_edge(start_key="use_tools", end_key=END)
-        tools_workflow = tools_subgraph.compile(checkpointer=checkpointer)
+        tools_workflow: CompiledStateGraph = tools_subgraph.compile(
+            checkpointer=checkpointer
+        )
 
         # summary workflow
-        summary_subgraph = StateGraph(MessagesState)
+        summary_subgraph: StateGraph = StateGraph(MessagesState)
         summary_subgraph.add_node(node="summarize", action=summarize)
         summary_subgraph.add_node(node="route_summary", action=route_summary)
 
         summary_subgraph.add_edge(start_key=START, end_key="route_summary")
         summary_subgraph.add_edge(start_key="summarize", end_key=END)
-        summary_workflow = summary_subgraph.compile(checkpointer=checkpointer)
+        summary_workflow: CompiledStateGraph = summary_subgraph.compile(
+            checkpointer=checkpointer
+        )
 
         # main workflow
-        main_graph = StateGraph(MessagesState)
+        main_graph: StateGraph = StateGraph(MessagesState)
         main_graph.add_node(node="chat", action=chat)
         main_graph.add_node(node="memory", action=memory)
         main_graph.add_node(node="tools_workflow", action=tools_workflow)
@@ -67,7 +84,9 @@ def compile_workflow(
         main_graph.add_edge(start_key="summary_workflow", end_key=END)
 
         # compiled workflow
-        workflow = main_graph.compile(checkpointer=checkpointer, store=store)
+        workflow: CompiledStateGraph = main_graph.compile(
+            checkpointer=checkpointer, store=store
+        )
         logging.info("Graph workflow compiled.")
         return workflow
 
@@ -78,7 +97,7 @@ def compile_workflow(
 
 try:
     logging.info("Initializing PostgreSQL connection pool...")
-    pool = ConnectionPool(conninfo=DB_URI, kwargs={"autocommit": True})
+    pool: ConnectionPool = ConnectionPool(conninfo=DB_URI, kwargs={"autocommit": True})
     logging.info("PostgreSQL connection pool initialized.")
 
     logging.info("Setting up PostgreSQL checkpointer...")
@@ -91,7 +110,9 @@ try:
     store.setup()
     logging.info("PostgreSQL store setup completed.")
 
-    workflow = compile_workflow(checkpointer=checkpointer, store=store)
+    workflow: CompiledStateGraph = compile_workflow(
+        checkpointer=checkpointer, store=store
+    )
 
 except Exception as e:
     logging.error(f"Failed to initialize graph database components: {e}")

@@ -1,6 +1,6 @@
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from langchain_core.tools import tool
 
@@ -12,16 +12,22 @@ from src.logger import logging
 def file_search(filename: str) -> Dict[str, Any]:
     """
     Search for a file in the current directory tree and return its contents.
+
     Args:
-        filename: Name of the file to locate.
+        filename (str): Name of the file to locate.
+
     Returns:
-        A dictionary containing the file contents if found, otherwise None.
+        Dict[str, Any]:
+            - A dictionary containing the file contents if found, otherwise an error message.
+
+    Raises:
+        MyException: If the file search process fails.
     """
     try:
         logging.info(f"Executing file_search tool for {filename}...")
 
-        current = Path.cwd()
-        contents = []
+        current: Path = Path.cwd()
+        contents: List[str] = []
 
         for filepath in current.rglob(filename):
             if filepath.is_file():

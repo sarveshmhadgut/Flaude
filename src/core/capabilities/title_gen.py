@@ -4,6 +4,8 @@ import yaml
 from dotenv import load_dotenv
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables.base import RunnableSerializable
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langsmith import traceable
 
 from src.exception import MyException
@@ -16,16 +18,16 @@ try:
     PROMPTS_CONFIGS = yaml.safe_load((ROOT_DIR / "configs/prompts.yaml").read_text())
     load_dotenv()
 
-    MODEL = get_llm(params=PARAMS_CONFIGS.get("LLM", {}))
-    PARSER = StrOutputParser()
+    MODEL: ChatGoogleGenerativeAI = get_llm(params=PARAMS_CONFIGS.get("LLM", {}))
+    PARSER: StrOutputParser = StrOutputParser()
 
-    PROMPT = ChatPromptTemplate(
+    PROMPT: ChatPromptTemplate = ChatPromptTemplate(
         [
             ("system", PROMPTS_CONFIGS.get("GENERATE_TITLE", {}).get("SYSTEM")),
             ("user", PROMPTS_CONFIGS.get("GENERATE_TITLE", {}).get("USER")),
         ]
     )
-    CHAIN = PROMPT | MODEL | PARSER
+    CHAIN: RunnableSerializable = PROMPT | MODEL | PARSER
 
 except Exception as e:
     raise MyException(e, sys) from e
@@ -33,6 +35,20 @@ except Exception as e:
 
 @traceable(name="title_generator")
 def generate_title(thread_id: str, conversation_history: str) -> str:
+    """
+    Generates a concise title for a given chat thread based on its early conversation history.
+
+    Args:
+        thread_id (str): The unique identifier for the conversation thread.
+        conversation_history (str): A string representation of the initial conversation messages.
+
+    Returns:
+        str:
+            - The generated title string.
+
+    Raises:
+        MyException: If the title generation process fails.
+    """
     try:
         logging.info(f"Generating title for thread {thread_id}...")
 
@@ -42,7 +58,7 @@ def generate_title(thread_id: str, conversation_history: str) -> str:
             )
             return "New Conversation"
 
-        res = CHAIN.invoke(input={"conversation_history": conversation_history})
+        res: str = CHAIN.invoke(input={"conversation_history": conversation_history})
         save_row(thread_id=thread_id, thread_name=res)
 
         logging.info(f"Generated title for thread {thread_id}: '{res}'.")

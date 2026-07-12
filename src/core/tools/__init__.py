@@ -1,4 +1,7 @@
 import sys
+from typing import List
+
+from langchain_core.tools.base import BaseTool
 
 from src.exception import MyException
 from src.logger import logging
@@ -10,7 +13,7 @@ try:
     from .rag import rag_tool
     from .web import get_conversion_rate, web_search
 
-    available_tools = [
+    available_tools: List[BaseTool] = [
         math_eval,
         web_search,
         file_search,

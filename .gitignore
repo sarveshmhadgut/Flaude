@@ -43,3 +43,4 @@ data/uploads/
 .langchain/
 clear_cache.sh
 logs/
+data/

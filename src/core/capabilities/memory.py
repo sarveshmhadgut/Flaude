@@ -2,6 +2,7 @@ import sys
 from typing import List, Tuple
 
 import yaml
+from langgraph.store.base import Item
 from langgraph.store.postgres import PostgresStore
 from pydantic import BaseModel, Field
 
@@ -34,8 +35,21 @@ class DecisionSchema(BaseModel):
 
 
 def get_namespace(user_id: str) -> Tuple[str, str]:
+    """
+    Constructs the memory namespace for a specific user.
+
+    Args:
+        user_id (str): The unique identifier for the user.
+
+    Returns:
+        Tuple[str, str]:
+            - The tuple containing the user namespace string.
+
+    Raises:
+        MyException: If constructing the namespace fails.
+    """
     try:
-        res = ("user_id", user_id)
+        res: Tuple[str, str] = ("user_id", user_id)
         return res
 
     except Exception as e:
@@ -43,15 +57,29 @@ def get_namespace(user_id: str) -> Tuple[str, str]:
 
 
 def get_memories(namespace: Tuple[str, str], store: PostgresStore) -> str:
+    """
+    Retrieves and formats memories from the PostgreSQL store for a given namespace.
+
+    Args:
+        namespace (Tuple[str, str]): The namespace tuple to fetch memories for.
+        store (PostgresStore): The initialized PostgresStore instance.
+
+    Returns:
+        str:
+            - A formatted string of all retrieved memories, or a placeholder if none exist.
+
+    Raises:
+        MyException: If retrieving memories fails.
+    """
     try:
         logging.info(f"Fetching memories for namespace: {namespace}...")
 
-        items = store.search(namespace=namespace)
+        items: List[Item] = store.search(namespace=namespace)
         if not items:
             logging.info(f"No memories found for namespace: {namespace}.")
             return "No memories available."
 
-        memories = "\n".join(
+        memories: str = "\n".join(
             f"{item.key}: {item.value['text']} ({item.value['importance']})"
             for item in items
         )

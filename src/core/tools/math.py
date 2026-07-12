@@ -2,7 +2,7 @@ import sys
 from typing import Any, Dict
 
 from langchain_core.tools import tool
-from sympy import sympify
+from sympy import Basic, sympify
 
 from src.exception import MyException
 from src.logger import logging
@@ -11,16 +11,22 @@ from src.logger import logging
 @tool(name_or_callable="math_eval")
 def math_eval(expression: str) -> Dict[str, Any]:
     """
-    Evaluate a mathematical expression and return the result.
+    Evaluates a mathematical expression using sympy.
+
     Args:
-        expression: Mathematical expression to evaluate.
+        expression (str): The mathematical expression to evaluate (e.g., '2 + 2').
+
     Returns:
-        A dictionary containing the evaluation result or an error message.
+        Dict[str, Any]:
+            - A dictionary containing the result of the evaluation.
+
+    Raises:
+        MyException: If the mathematical evaluation fails.
     """
     try:
         logging.info(f"Executing math_eval tool for {expression}...")
 
-        res = sympify(expression)
+        res: Basic = sympify(expression)
 
         logging.info(f"Finished executing math_eval tool for {expression}.")
         return {
