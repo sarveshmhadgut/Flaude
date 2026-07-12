@@ -1,0 +1,35 @@
+[project]
+name = "flaude"
+version = "0.1.0"
+description = "Just a chatbot."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "langgraph",
+    "langchain",
+    "langchain-google-genai",
+    "pydantic",
+    "python-dotenv",
+    "rich",
+    "pandas",
+    "numpy",
+    "langchain-community",
+    "duckduckgo-search",
+    "langchain-experimental",
+    "ddgs",
+    "networkx",
+    "matplotlib",
+    "catppuccin",
+    "pytest",
+    "termcolor",
+    "uuid",
+    "streamlit",
+    "watchdog",
+    "langgraph-checkpoint-sqlite",
+    "sympy",
+    "langchain-chroma",
+    "pypdf",
+    "langgraph-checkpoint-postgres",
+    "psycopg[binary,pool]",
+    "colorlog>=6.10.1",
+]

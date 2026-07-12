@@ -1,0 +1,74 @@
+LANGSMITH_PROJECT: flaude-app
+LANGCHAIN_TRACING_V2: true
+
+LLM:
+  model: "gemini-2.5-flash"
+  temperature: 1.3
+  max_output_tokens: 3000
+
+MAX_TOKENS: 8000
+RETRIEVER:
+  search_type: similarity
+  search_args:
+    k: 4
+
+EMBEDDINGS:
+  model: gemini-embedding-001
+
+INGESTION_PIPELINE:
+  chunk_size: 1000
+  chunk_overlap: 200
+
+FILES:
+  CSS_FILEPATH: src/ui/assets/styles.css
+  CHAT_DB_FILEPATH: data/db/flaude_chats.db
+  MAPPING_DB_FILEPATH: data/db/flaude_mapping.db
+  VECTOR_DB_PATH: data/db/chroma
+  FILES_DIRNAME: data/uploads
+
+MemorySchema:
+  KEY: |
+    Unique key identifying the memory. Use snake_case (e.g. 'food_preference', 'company', 'profession'). This will be used as the 'key' argument in ltm_store.put().
+
+  VALUE: |
+    The memory text to store under value['text']. Write a complete, self-contained factual statement optimized for semantic search.
+    Do not include the memory key.
+
+    Examples:
+      - "The user works at Lumon Industries."
+      - "The user's favorite season is winter."
+      - "The user likes Garlic Guajillo Shrimps."
+
+  IMPORTANCE: |
+    The importance level of the memory being stored as a float from 0.0 to 1.0.
+    Use higher values for more critical information.
+    Examples:
+      - A favorite color might be 0.2.
+      - A medical allergy would be 1.0.
+
+DecisionSchema:
+  UPDATE_MEMORY: |
+    Indicates whether any long-term memories should be written to the memory store.
+
+    Set to:
+      - true: One or more memories should be created or updated.
+      - false: No memory operations are required and the memories list should be empty.
+
+  MEMORIES: |
+    List of memories to write to the memory store.
+
+    Each memory maps directly to:
+
+      ltm_store.put(
+          namespace=<namespace>,
+          key=memory.key,
+          value={
+              "text": memory.value,
+              "importance": memory.importance,
+              "metadata": {
+                  "user_id": <user_id>,
+              }
+          },
+      )
+
+    Include one entry per distinct memory. Do not combine unrelated facts into a single memory.

@@ -1,0 +1,343 @@
+@import url('https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap');
+
+/* Safely apply custom font */
+html,
+body,
+p,
+div,
+span,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+input,
+button,
+textarea,
+a {
+    font-family: 'Satoshi', sans-serif;
+}
+
+/* Force Streamlit icons back to native material-symbols to fix text breakage */
+.material-symbols-rounded,
+.material-icons,
+[class*="icon"] {
+    font-family: 'Material Symbols Rounded', 'Material Icons', sans-serif !important;
+}
+
+/* Hide Streamlit elements */
+#MainMenu {
+    visibility: hidden;
+}
+
+footer {
+    visibility: hidden;
+}
+
+/* Main Block */
+.block-container {
+    max-width: 900px !important;
+    padding-top: 3rem !important;
+    padding-bottom: 1rem;
+}
+
+/* Elegant Title */
+h1 {
+    text-align: center !important;
+    color: #ff8d67 !important;
+    font-weight: 800 !important;
+    font-size: 3rem !important;
+    line-height: 1.6 !important;
+    margin-top: 1rem !important;
+    padding-top: 1rem !important;
+    overflow: visible !important;
+}
+
+/* Hide chat avatar symbols completely */
+div[data-testid*="Avatar"],
+div[data-testid*="stChatMessageAvatar"],
+.stChatAvatar {
+    display: none !important;
+}
+
+/* Force Transparent Wrapper Backgrounds */
+div[data-testid="stChatMessage"] {
+    background-color: transparent !important;
+}
+
+/* Make Message Bubbles Compact */
+div[data-testid="stChatMessageContent"] {
+    flex: 0 1 auto !important;
+    width: fit-content !important;
+    max-width: 80% !important;
+    color: black !important;
+    border-radius: 18px !important;
+    padding: 10px 16px !important;
+    margin: 0 !important;
+}
+
+div[data-testid="stChatMessageContent"] * {
+    color: black !important;
+    margin-bottom: 0;
+}
+
+/* AI Message Bubble (Left, #101010, White Text) */
+div[data-testid="stChatMessage"]:not(:has(.user-message)) div[data-testid="stChatMessageContent"] {
+    background-color: #101010 !important;
+    color: white !important;
+}
+
+div[data-testid="stChatMessage"]:not(:has(.user-message)) div[data-testid="stChatMessageContent"] * {
+    color: white !important;
+}
+
+/* Human Message Bubble (Right, #E59F87) */
+div[data-testid="stChatMessage"]:has(.user-message) {
+    flex-direction: row-reverse;
+    justify-content: flex-start;
+}
+
+div[data-testid="stChatMessage"]:has(.user-message) div[data-testid="stChatMessageContent"] {
+    background-color: #E59F87 !important;
+}
+
+/* Sidebar Clean Styling */
+[data-testid="stSidebar"] {
+    background-color: #0d0d0d !important;
+    border-right: 1px solid #2a2a2a !important;
+    border-top-right-radius: 16px !important;
+    border-bottom-right-radius: 16px !important;
+    overflow: hidden !important;
+}
+
+[data-testid="stSidebar"]>div:first-child {
+    padding-top: 1rem !important;
+}
+
+[data-testid="stSidebarNav"] {
+    display: none !important;
+}
+
+[data-testid="stSidebarUserContent"] {
+    padding-top: 0rem !important;
+}
+
+[data-testid="stSidebar"] h2 {
+    color: #ff8d67 !important;
+    font-weight: 700 !important;
+    font-size: 1.25rem !important;
+    padding-bottom: 0.75rem !important;
+    border-bottom: 1px solid #2a2a2a !important;
+    margin-bottom: 1.25rem !important;
+    margin-top: 0.25rem !important;
+}
+
+/* Sidebar Conversation Buttons */
+[data-testid="stSidebar"] button {
+    width: 100% !important;
+    background-color: transparent !important;
+    border: 1px solid transparent !important;
+    color: #B8B8BA !important;
+    font-weight: 400 !important;
+    border-radius: 8px !important;
+    padding: 0.25rem 0.5rem !important;
+    margin-bottom: 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    line-height: 1.2 !important;
+    transition: all 0.2s ease !important;
+    display: flex !important;
+    justify-content: flex-start !important;
+}
+
+/* Reduce Streamlit's default grid gap in the sidebar */
+[data-testid="stSidebarUserContent"] [data-testid="stVerticalBlock"] {
+    gap: 0.4rem !important;
+}
+
+[data-testid="stSidebar"] button:hover {
+    background-color: #2a2a2a !important;
+    color: #ffffff !important;
+}
+
+[data-testid="stSidebar"] button:active {
+    background-color: #333333 !important;
+}
+
+[data-testid="stSidebar"] button p {
+    font-size: 0.9rem !important;
+    color: #B8B8BA !important;
+    text-align: left !important;
+    margin: 0 !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+}
+
+[data-testid="stSidebar"] button div,
+[data-testid="stSidebar"] button div p {
+    display: flex !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
+    width: 100% !important;
+}
+
+/* Sidebar New Conversation Button (Primary) */
+[data-testid="stSidebar"] button[kind="primary"] {
+    background-color: #ff8d67 !important;
+    color: black !important;
+    justify-content: center !important;
+    font-weight: 600 !important;
+    padding: 0.5rem 1rem !important;
+    min-height: 2.5rem !important;
+    border-radius: 16px !important;
+    margin-bottom: 0 !important;
+}
+
+[data-testid="stSidebar"] button[kind="primary"] p,
+[data-testid="stSidebar"] button[kind="primary"] div {
+    text-align: center !important;
+    justify-content: center !important;
+    color: black !important;
+}
+
+[data-testid="stSidebar"] button[kind="primary"]:hover {
+    background-color: #ff9d7a !important;
+    border-color: transparent !important;
+}
+
+/* Sidebar Collapse/Expand Button */
+[data-testid="stSidebarCollapseButton"] button,
+[data-testid="collapsedControl"] button {
+    border-radius: 50% !important;
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 0 !important;
+}
+
+[data-testid="stSidebarCollapseButton"] svg,
+[data-testid="collapsedControl"] svg {
+    width: 14px !important;
+    height: 14px !important;
+    margin: 0 !important;
+}
+
+/* Ensure the wrapper doesn't stretch or have a background */
+[data-testid="stSidebarCollapseButton"],
+[data-testid="collapsedControl"] {
+    background: transparent !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: fit-content !important;
+    height: fit-content !important;
+}
+
+/* Aggressively strip inner backgrounds to fix the purple box */
+[data-testid="stChatInput"] * {
+    background-color: transparent !important;
+}
+
+[data-testid="stChatInput"]>div {
+    border-radius: 16px !important;
+    background-color: #0d0d0d !important;
+    /* ONLY this should have the background */
+    border: 1px solid #2a2a2a !important;
+    padding-left: 16px !important;
+    padding-right: 12px !important;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+}
+
+/* Ensure focus state doesn't break rounding */
+[data-testid="stChatInput"]>div:focus-within {
+    border-color: #ff9d7a !important;
+    box-shadow: none !important;
+}
+
+[data-testid="stChatInput"] textarea {
+    color: #e6e4dd !important;
+    caret-color: #ff8d67 !important;
+}
+
+[data-testid="stChatInput"] textarea::placeholder {
+    color: #8c8a85 !important;
+}
+
+/* Send Button Styling */
+[data-testid="stChatInput"] button {
+    border-radius: 50% !important;
+    background-color: transparent !important;
+    color: #8c8a85 !important;
+    transition: all 0.2s ease !important;
+    transform: scale(0.9) !important;
+}
+
+[data-testid="stChatInput"] button svg {
+    fill: currentColor !important;
+}
+
+[data-testid="stChatInput"] button:not(:disabled) {
+    background-color: #ff9d7a !important;
+    color: #1a1918 !important;
+}
+
+[data-testid="stChatInput"] button:not(:disabled):hover {
+    background-color: #ff8d67 !important;
+    transform: scale(0.95) !important;
+}
+
+/* Approval Info Box */
+.approval-info {
+    background-color: #0d0d0d !important;
+    color: #ff8d67 !important;
+    border: 1px solid #2a2a2a !important;
+    border-radius: 12px !important;
+    padding: 16px !important;
+    text-align: center !important;
+    font-weight: 500 !important;
+    margin-bottom: 1rem !important;
+}
+
+/* Main block primary button */
+button[kind="primary"] {
+    background-color: #ff8d67 !important;
+    color: black !important;
+    font-weight: 600 !important;
+    border: none !important;
+}
+
+button[kind="primary"] *,
+div[data-testid="stChatMessageContent"] button[kind="primary"] * {
+    color: black !important;
+}
+
+button[kind="primary"]:hover {
+    background-color: #ff9d7a !important;
+}
+
+/* Secondary button */
+button[kind="secondary"] {
+    background-color: #0d0d0d !important;
+    color: #B8B8BA !important;
+    border: 1px solid #2a2a2a !important;
+    font-weight: 500 !important;
+}
+
+button[kind="secondary"]:hover {
+    background-color: #2a2a2a !important;
+    color: white !important;
+}
+
+/* Fix Tool Execution UI Squishing */
+div[data-testid="stChatMessageContent"] summary,
+div[data-testid="stChatMessageContent"] summary * {
+    white-space: nowrap !important;
+}
