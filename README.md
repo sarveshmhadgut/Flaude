@@ -1,6 +1,6 @@
 # Flaude – LangGraph based Agentic Chatbot
 
-Flaude is a personal AI chatbot built on LangGraph. It has persistent memory, a handful of useful tools, and a clean Streamlit interface. Nothing groundbreaking — just a well-built chat app that's fun to use and extend.
+Flaude turns the typical LLM chat experience into a capable, personal assistant. Instead of relying on a plain prompt-reply loop, it uses LangGraph to orchestrate a smart agentic workflow—combining persistent memory, dynamic tool execution, and human-in-the-loop safeguards—to give you a chatbot that actually reasons, researches, and remembers.
 
 ## What makes it interesting
 

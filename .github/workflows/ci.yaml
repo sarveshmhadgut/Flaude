@@ -31,4 +31,7 @@ jobs:
         run: uvx mypy src --explicit-package-bases --ignore-missing-imports
 
       - name: Run tests (pytest)
+        env:
+          GOOGLE_API_KEY: "goofy-ahh-google-key"
+          LANGCHAIN_API_KEY: "goofy-ahh-langchain-key"
         run: uv run pytest tests
