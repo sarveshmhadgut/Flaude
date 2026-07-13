@@ -22,7 +22,6 @@ dependencies = [
     "matplotlib",
     "catppuccin",
     "termcolor",
-    "uuid",
     "streamlit",
     "watchdog",
     "langgraph-checkpoint-sqlite",
@@ -42,9 +41,7 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-pythonpath = [
-  "."
-]
+pythonpath = ["."]
 
 [tool.mypy]
 ignore_missing_imports = true

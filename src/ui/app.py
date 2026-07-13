@@ -19,14 +19,18 @@ try:
 
     load_dotenv()
     os.environ["LANGSMITH_PROJECT"] = PARAMS_CONFIGS.get("LANGSMITH_PROJECT", "")
-    os.environ["LANGSMITH_TRACING_V2"] = str(PARAMS_CONFIGS.get("LANGCHAIN_TRACING_V2", "")).lower()
+    os.environ["LANGSMITH_TRACING_V2"] = str(
+        PARAMS_CONFIGS.get("LANGCHAIN_TRACING_V2", "")
+    ).lower()
 
     from src.infra.database import load_conversations, load_thread_mapping
     from src.ui.components.chat import display_messages, handle_input
     from src.ui.components.sidebar import render_sidebar
     from src.ui.state import init_session, new_conversation
 
-    STYLE_CSS = load_css(filepath=ROOT_DIR / PARAMS_CONFIGS.get("FILES", {}).get("CSS_FILEPATH", ""))
+    STYLE_CSS = load_css(
+        filepath=ROOT_DIR / PARAMS_CONFIGS.get("FILES", {}).get("CSS_FILEPATH", "")
+    )
 
     # title and header
     st.set_page_config(page_title="Flaude", layout="centered")
@@ -35,7 +39,9 @@ try:
     st.markdown("<h1>Flaude</h1>", unsafe_allow_html=True)
 
     # init params
-    init_session(load_conversations=load_conversations, load_thread_mapping=load_thread_mapping)
+    init_session(
+        load_conversations=load_conversations, load_thread_mapping=load_thread_mapping
+    )
 
     # display current conversation messages
     display_messages(st.session_state["messages"])
@@ -58,7 +64,9 @@ try:
     if st.session_state.get("awaiting_approval", False):
         required_tools: List[Any] = st.session_state.get("required_tools", [])
         if required_tools:
-            st.write(f"The model requires tool approval before continuing. Required tools: `{', '.join(required_tools)}`")
+            st.write(
+                f"The model requires tool approval before continuing. Required tools: `{', '.join(required_tools)}`"
+            )
         else:
             st.write("The model requires tool approval before continuing.")
 

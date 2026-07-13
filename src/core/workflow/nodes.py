@@ -7,13 +7,17 @@ from langchain_core.messages import AIMessage, HumanMessage, RemoveMessage
 from langchain_core.messages.utils import count_tokens_approximately
 from langchain_core.runnables import RunnableConfig
 from langgraph.errors import GraphInterrupt
-from langgraph.graph import END
 from langgraph.prebuilt import ToolNode
 from langgraph.store.base import BaseStore
 from langgraph.types import Command, interrupt
 from langsmith import traceable
 
-from src.core.agents.chains import CHAT_CHAIN, MEMORY_CHAIN, PARAMS_CONFIGS, SUMMARY_CHAIN
+from src.core.agents.chains import (
+    CHAT_CHAIN,
+    MEMORY_CHAIN,
+    PARAMS_CONFIGS,
+    SUMMARY_CHAIN,
+)
 from src.core.capabilities.memory import DecisionSchema, get_memories, get_namespace
 from src.core.tools import available_tools
 from src.core.workflow.state import MessagesState
@@ -22,7 +26,9 @@ from src.logger import logging
 
 
 @traceable(name="memory")
-def memory(state: MessagesState, config: RunnableConfig, store: BaseStore) -> Dict[str, Any]:
+def memory(
+    state: MessagesState, config: RunnableConfig, store: BaseStore
+) -> Dict[str, Any]:
     """
     Executes the memory module to fetch and decide if memories need updating.
 
@@ -43,7 +49,11 @@ def memory(state: MessagesState, config: RunnableConfig, store: BaseStore) -> Di
         user_id: str = config["configurable"]["user_id"]
         namespace: Tuple[str, str] = get_namespace(user_id=user_id)
 
-        recent_message: Any = next(message.content for message in reversed(state["messages"]) if isinstance(message, HumanMessage))
+        recent_message: Any = next(
+            message.content
+            for message in reversed(state["messages"])
+            if isinstance(message, HumanMessage)
+        )
         current_memories: str = get_memories(
             namespace=namespace,
             store=store,
@@ -86,7 +96,9 @@ def memory(state: MessagesState, config: RunnableConfig, store: BaseStore) -> Di
 
 
 @traceable(name="chat")
-def chat(state: MessagesState, config: RunnableConfig, store: BaseStore) -> Dict[str, Any]:
+def chat(
+    state: MessagesState, config: RunnableConfig, store: BaseStore
+) -> Dict[str, Any]:
     """
     Executes the main chat logic, sending context and history to the LLM.
 
@@ -109,7 +121,13 @@ def chat(state: MessagesState, config: RunnableConfig, store: BaseStore) -> Dict
         user_id: str = config["configurable"]["user_id"]
 
         namespace: Tuple[str, str] = get_namespace(user_id=user_id)
-        recent_message: str = str(next(message.content for message in reversed(state["messages"]) if isinstance(message, HumanMessage)))
+        recent_message: str = str(
+            next(
+                message.content
+                for message in reversed(state["messages"])
+                if isinstance(message, HumanMessage)
+            )
+        )
         current_memories: str = get_memories(
             namespace=namespace,
             store=store,
@@ -146,7 +164,9 @@ use_tools: ToolNode = ToolNode(tools=available_tools)
 
 
 @traceable(name="approve_tools")
-def approve_tools(state: MessagesState, config: RunnableConfig) -> Command[Literal["use_tools", "__end__"]]:
+def approve_tools(
+    state: MessagesState, config: RunnableConfig
+) -> Command[Literal["use_tools", "__end__"]]:
     """
     Checks for tool calls and interrupts the workflow to ask for explicit user approval.
 
@@ -163,9 +183,15 @@ def approve_tools(state: MessagesState, config: RunnableConfig) -> Command[Liter
     """
     try:
         logging.info("Verifying tools execution approvals...")
-        recent_message: AIMessage = next(message for message in reversed(state["messages"]) if isinstance(message, AIMessage))
+        recent_message: AIMessage = next(
+            message
+            for message in reversed(state["messages"])
+            if isinstance(message, AIMessage)
+        )
 
-        required_tools: List[str] = [tool_call["name"] for tool_call in recent_message.tool_calls]
+        required_tools: List[str] = [
+            tool_call["name"] for tool_call in recent_message.tool_calls
+        ]
         approved = interrupt(
             {
                 "type": "approval",
@@ -191,7 +217,9 @@ def approve_tools(state: MessagesState, config: RunnableConfig) -> Command[Liter
 
 
 @traceable(name="summarize")
-def summarize(state: MessagesState, config: RunnableConfig, store: BaseStore) -> Command[Tuple]:
+def summarize(
+    state: MessagesState, config: RunnableConfig, store: BaseStore
+) -> Command[Tuple]:
     """
     Summarizes older messages in the conversation to conserve context length.
 
@@ -224,7 +252,10 @@ def summarize(state: MessagesState, config: RunnableConfig, store: BaseStore) ->
         return Command(
             update={
                 "messages_summary": updated_summary,
-                "messages": [RemoveMessage(id=str(message.id)) for message in state["messages"][:-4]],
+                "messages": [
+                    RemoveMessage(id=str(message.id))
+                    for message in state["messages"][:-4]
+                ],
             },
             graph=Command.PARENT,
         )

@@ -9,14 +9,23 @@ from langgraph.store.postgres import PostgresStore
 from psycopg_pool import ConnectionPool
 
 from src.core.agents.chains import DB_URI
-from src.core.workflow.nodes import approve_tools, chat, memory, route_summary, summarize, use_tools
+from src.core.workflow.nodes import (
+    approve_tools,
+    chat,
+    memory,
+    route_summary,
+    summarize,
+    use_tools,
+)
 from src.core.workflow.state import MessagesState
 from src.exception import MyException
 from src.infra.config import PARAMS_CONFIGS, get_embeddings
 from src.logger import logging
 
 
-def compile_workflow(checkpointer: PostgresSaver, store: PostgresStore) -> CompiledStateGraph:
+def compile_workflow(
+    checkpointer: PostgresSaver, store: PostgresStore
+) -> CompiledStateGraph:
     """
     Builds and compiles the main LangGraph state machine for the application.
 
@@ -41,7 +50,9 @@ def compile_workflow(checkpointer: PostgresSaver, store: PostgresStore) -> Compi
 
         tools_subgraph.add_edge(start_key=START, end_key="approve_tools")
         tools_subgraph.add_edge(start_key="use_tools", end_key=END)
-        tools_workflow: CompiledStateGraph = tools_subgraph.compile(checkpointer=checkpointer)
+        tools_workflow: CompiledStateGraph = tools_subgraph.compile(
+            checkpointer=checkpointer
+        )
 
         # summary workflow
         summary_subgraph: StateGraph = StateGraph(MessagesState)
@@ -50,7 +61,9 @@ def compile_workflow(checkpointer: PostgresSaver, store: PostgresStore) -> Compi
 
         summary_subgraph.add_edge(start_key=START, end_key="route_summary")
         summary_subgraph.add_edge(start_key="summarize", end_key=END)
-        summary_workflow: CompiledStateGraph = summary_subgraph.compile(checkpointer=checkpointer)
+        summary_workflow: CompiledStateGraph = summary_subgraph.compile(
+            checkpointer=checkpointer
+        )
 
         # main workflow
         main_graph: StateGraph = StateGraph(MessagesState)
@@ -73,7 +86,9 @@ def compile_workflow(checkpointer: PostgresSaver, store: PostgresStore) -> Compi
         main_graph.add_edge(start_key="summary_workflow", end_key=END)
 
         # compiled workflow
-        workflow: CompiledStateGraph = main_graph.compile(checkpointer=checkpointer, store=store)
+        workflow: CompiledStateGraph = main_graph.compile(
+            checkpointer=checkpointer, store=store
+        )
         logging.info("Graph workflow compiled.")
         return workflow
 
@@ -105,7 +120,9 @@ try:
     store.setup()
     logging.info("PostgreSQL store setup completed.")
 
-    workflow: CompiledStateGraph = compile_workflow(checkpointer=checkpointer, store=store)
+    workflow: CompiledStateGraph = compile_workflow(
+        checkpointer=checkpointer, store=store
+    )
 
 except Exception as e:
     logging.error(f"Failed to initialize graph database components: {e}")

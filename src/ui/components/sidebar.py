@@ -30,7 +30,9 @@ def load_conversation_history(thread_id: str) -> List[Any]:
     """
     try:
         logging.info(f"Executing load_conversation_history for {thread_id}...")
-        thread_name: str = st.session_state["thread_mapping"].get(thread_id, f"Conversation {thread_id[:8]}")
+        thread_name: str = st.session_state["thread_mapping"].get(
+            thread_id, f"Conversation {thread_id[:8]}"
+        )
 
         state: StateSnapshot = workflow.get_state(
             config=get_runnable_config(
@@ -70,33 +72,46 @@ def render_conversations() -> None:
             ):
                 logging.info(f"Switching to conversation thread: {thread}...")
                 st.session_state["current_thread"] = thread
-                conversation_history: List = load_conversation_history(thread_id=st.session_state["current_thread"])
+                conversation_history: List = load_conversation_history(
+                    thread_id=st.session_state["current_thread"]
+                )
 
                 retriever: VectorStoreRetriever = get_retriever(thread)
                 vector_store = cast(Chroma, retriever.vectorstore)
 
                 if vector_store._collection.count() > 0:
                     db_data = vector_store.get(limit=1)
-                    metadata = db_data["metadatas"][0] if db_data["metadatas"] and db_data["metadatas"][0] else {}
+                    metadata = (
+                        db_data["metadatas"][0]
+                        if db_data["metadatas"] and db_data["metadatas"][0]
+                        else {}
+                    )
                     filepath: str = metadata.get("source", "Unknown Document")
                     st.session_state["metadatas"][thread] = {"filepath": filepath}
                 previous_messages: List[Dict[str, Any]] = []
 
                 for message in conversation_history:
                     if isinstance(message, HumanMessage):
-                        previous_messages.append({"role": "user", "content": str(message.content)})
+                        previous_messages.append(
+                            {"role": "user", "content": str(message.content)}
+                        )
 
                     elif isinstance(message, AIMessage):
                         content: str = str(message.content)
                         content = (
                             content
                             if isinstance(content, str)
-                            else "".join(b.get("text", "") if isinstance(b, dict) else str(b) for b in content)
+                            else "".join(
+                                b.get("text", "") if isinstance(b, dict) else str(b)
+                                for b in content
+                            )
                             if content
                             else ""
                         )
                         if content:
-                            previous_messages.append({"role": "assistant", "content": content})
+                            previous_messages.append(
+                                {"role": "assistant", "content": content}
+                            )
 
                 st.session_state["messages"] = previous_messages
                 st.rerun()
