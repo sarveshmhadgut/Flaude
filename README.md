@@ -1,6 +1,6 @@
 # Flaude – LangGraph based Agentic Chatbot
 
-Flaude is a personal AI chatbot built on Google Gemini and LangGraph. It has persistent memory, a handful of useful tools, and a clean Streamlit interface. Nothing groundbreaking — just a well-built chat app that's fun to use and extend.
+Flaude is a personal AI chatbot built on LangGraph. It has persistent memory, a handful of useful tools, and a clean Streamlit interface. Nothing groundbreaking — just a well-built chat app that's fun to use and extend.
 
 ## What makes it interesting
 
