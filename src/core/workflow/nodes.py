@@ -6,23 +6,15 @@ import streamlit as st
 from langchain_core.messages import AIMessage, HumanMessage, RemoveMessage
 from langchain_core.messages.utils import count_tokens_approximately
 from langchain_core.runnables import RunnableConfig
+from langgraph.errors import GraphInterrupt
 from langgraph.graph import END
 from langgraph.prebuilt import ToolNode
+from langgraph.store.base import BaseStore
 from langgraph.types import Command, interrupt
 from langsmith import traceable
 
-from src.core.agents.chains import (
-    CHAT_CHAIN,
-    MEMORY_CHAIN,
-    PARAMS_CONFIGS,
-    SUMMARY_CHAIN,
-)
-from src.core.capabilities.memory import (
-    DecisionSchema,
-    PostgresStore,
-    get_memories,
-    get_namespace,
-)
+from src.core.agents.chains import CHAT_CHAIN, MEMORY_CHAIN, PARAMS_CONFIGS, SUMMARY_CHAIN
+from src.core.capabilities.memory import DecisionSchema, get_memories, get_namespace
 from src.core.tools import available_tools
 from src.core.workflow.state import MessagesState
 from src.exception import MyException
@@ -30,16 +22,14 @@ from src.logger import logging
 
 
 @traceable(name="memory")
-def memory(
-    state: MessagesState, config: RunnableConfig, store: PostgresStore
-) -> Dict[str, Any]:
+def memory(state: MessagesState, config: RunnableConfig, store: BaseStore) -> Dict[str, Any]:
     """
     Executes the memory module to fetch and decide if memories need updating.
 
     Args:
         state (MessagesState): The current state of the workflow messages.
         config (RunnableConfig): Execution configuration.
-        store (PostgresStore): The PostgreSQL store instance for memories.
+        store (BaseStore): The PostgreSQL store instance for memories.
 
     Returns:
         Dict[str, Any]:
@@ -53,12 +43,13 @@ def memory(
         user_id: str = config["configurable"]["user_id"]
         namespace: Tuple[str, str] = get_namespace(user_id=user_id)
 
-        recent_message: Any = next(
-            message.content
-            for message in reversed(state["messages"])
-            if isinstance(message, HumanMessage)
+        recent_message: Any = next(message.content for message in reversed(state["messages"]) if isinstance(message, HumanMessage))
+        current_memories: str = get_memories(
+            namespace=namespace,
+            store=store,
+            query=recent_message,
+            limit=PARAMS_CONFIGS.get("MEMORY_SEARCH_K", 5),
         )
-        current_memories: str = get_memories(namespace=namespace, store=store)
 
         res: DecisionSchema = MEMORY_CHAIN.invoke(
             input={
@@ -95,16 +86,14 @@ def memory(
 
 
 @traceable(name="chat")
-def chat(
-    state: MessagesState, config: RunnableConfig, store: PostgresStore
-) -> Dict[str, Any]:
+def chat(state: MessagesState, config: RunnableConfig, store: BaseStore) -> Dict[str, Any]:
     """
     Executes the main chat logic, sending context and history to the LLM.
 
     Args:
         state (MessagesState): The current state of the workflow messages.
         config (RunnableConfig): Execution configuration containing thread and user IDs.
-        store (PostgresStore): The PostgreSQL store instance for memories.
+        store (BaseStore): The PostgreSQL store instance for memories.
 
     Returns:
         Dict[str, Any]:
@@ -120,7 +109,13 @@ def chat(
         user_id: str = config["configurable"]["user_id"]
 
         namespace: Tuple[str, str] = get_namespace(user_id=user_id)
-        current_memories: str = get_memories(namespace=namespace, store=store)
+        recent_message: str = str(next(message.content for message in reversed(state["messages"]) if isinstance(message, HumanMessage)))
+        current_memories: str = get_memories(
+            namespace=namespace,
+            store=store,
+            query=recent_message,
+            limit=PARAMS_CONFIGS.get("MEMORY_SEARCH_K", 5),
+        )
 
         active_file = "None"
         if thread_id in st.session_state.get("metadatas", {}):
@@ -151,9 +146,7 @@ use_tools: ToolNode = ToolNode(tools=available_tools)
 
 
 @traceable(name="approve_tools")
-def approve_tools(
-    state: MessagesState, config: RunnableConfig
-) -> Command[Literal["use_tools", "__end__"]]:
+def approve_tools(state: MessagesState, config: RunnableConfig) -> Command[Literal["use_tools", "__end__"]]:
     """
     Checks for tool calls and interrupts the workflow to ask for explicit user approval.
 
@@ -170,15 +163,9 @@ def approve_tools(
     """
     try:
         logging.info("Verifying tools execution approvals...")
-        recent_message: AIMessage = next(
-            message
-            for message in reversed(state["messages"])
-            if isinstance(message, AIMessage)
-        )
+        recent_message: AIMessage = next(message for message in reversed(state["messages"]) if isinstance(message, AIMessage))
 
-        required_tools: List[str] = [
-            tool_call["name"] for tool_call in recent_message.tool_calls
-        ]
+        required_tools: List[str] = [tool_call["name"] for tool_call in recent_message.tool_calls]
         approved = interrupt(
             {
                 "type": "approval",
@@ -189,27 +176,29 @@ def approve_tools(
 
         if approved:
             logging.info("Tools execution approved.")
-            return Command(goto="use_tools")
+            use_tools_literal: Literal["use_tools"] = "use_tools"
+            return Command(goto=use_tools_literal)
 
         logging.info("Tools execution denied.")
-        return Command(goto=END)
+        end_val: Literal["__end__"] = "__end__"
+        return Command(goto=end_val)
 
+    except GraphInterrupt:
+        raise
     except Exception as e:
         logging.error(f"Failed to verify tools execution approvals: {e}")
         raise MyException(e, sys) from e
 
 
 @traceable(name="summarize")
-def summarize(
-    state: MessagesState, config: RunnableConfig, store: PostgresStore
-) -> Command[Tuple]:
+def summarize(state: MessagesState, config: RunnableConfig, store: BaseStore) -> Command[Tuple]:
     """
     Summarizes older messages in the conversation to conserve context length.
 
     Args:
         state (MessagesState): The current state of the workflow messages.
         config (RunnableConfig): Execution configuration.
-        store (PostgresStore): The PostgreSQL store instance.
+        store (BaseStore): The PostgreSQL store instance.
 
     Returns:
         Command[Tuple]:
@@ -235,9 +224,7 @@ def summarize(
         return Command(
             update={
                 "messages_summary": updated_summary,
-                "messages": [
-                    RemoveMessage(id=message.id) for message in state["messages"][:-4]
-                ],
+                "messages": [RemoveMessage(id=str(message.id)) for message in state["messages"][:-4]],
             },
             graph=Command.PARENT,
         )
@@ -268,10 +255,12 @@ def route_summary(state: MessagesState) -> Command[Literal["summarize", "__end__
 
         if current_tokens > PARAMS_CONFIGS.get("MAX_TOKENS", 4000):
             logging.info("Token threshold exceeded; routing to summarization module.")
-            return Command(goto="summarize")
+            summarize_val: Literal["summarize"] = "summarize"
+            return Command(goto=summarize_val)
 
         logging.info("Token count within limits; summarization bypassed.")
-        return Command(goto=END)
+        end_val2: Literal["__end__"] = "__end__"
+        return Command(goto=end_val2)
 
     except Exception as e:
         logging.error(f"Failed to evaluate summarization requirements: {e}")

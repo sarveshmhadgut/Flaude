@@ -40,3 +40,11 @@ dev = [
     "ruff",
     "mypy",
 ]
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "."
+]
+
+[tool.mypy]
+ignore_missing_imports = true

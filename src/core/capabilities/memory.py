@@ -2,8 +2,7 @@ import sys
 from typing import List, Tuple
 
 import yaml
-from langgraph.store.base import Item
-from langgraph.store.postgres import PostgresStore
+from langgraph.store.base import BaseStore, SearchItem
 from pydantic import BaseModel, Field
 
 from src.exception import MyException
@@ -20,18 +19,12 @@ except Exception as e:
 class MemorySchema(BaseModel):
     key: str = Field(description=PARAMS_CONFIGS.get("MemorySchema", {}).get("KEY"))
     value: str = Field(description=PARAMS_CONFIGS.get("MemorySchema", {}).get("VALUE"))
-    importance: float = Field(
-        description=PARAMS_CONFIGS.get("MemorySchema", {}).get("IMPORTANCE")
-    )
+    importance: float = Field(description=PARAMS_CONFIGS.get("MemorySchema", {}).get("IMPORTANCE"))
 
 
 class DecisionSchema(BaseModel):
-    update_memory: bool = Field(
-        description=PARAMS_CONFIGS.get("DecisionSchema", {}).get("UPDATE_MEMORY")
-    )
-    memories: List[MemorySchema] = Field(
-        description=PARAMS_CONFIGS.get("DecisionSchema", {}).get("MEMORIES")
-    )
+    update_memory: bool = Field(description=PARAMS_CONFIGS.get("DecisionSchema", {}).get("UPDATE_MEMORY"))
+    memories: List[MemorySchema] = Field(description=PARAMS_CONFIGS.get("DecisionSchema", {}).get("MEMORIES"))
 
 
 def get_namespace(user_id: str) -> Tuple[str, str]:
@@ -56,17 +49,23 @@ def get_namespace(user_id: str) -> Tuple[str, str]:
         raise MyException(e, sys) from e
 
 
-def get_memories(namespace: Tuple[str, str], store: PostgresStore) -> str:
+def get_memories(namespace: Tuple[str, str], store: BaseStore, query: str | None = None, limit: int = 5) -> str:
     """
-    Retrieves and formats memories from the PostgreSQL store for a given namespace.
+    Retrieves and formats memories from the PostgreSQL store for a given user.
+
+    When query is None all memories in the namespace are returned (original
+    behaviour, useful as a fallback).
 
     Args:
         namespace (Tuple[str, str]): The namespace tuple to fetch memories for.
-        store (PostgresStore): The initialized PostgresStore instance.
+        store (BaseStore): The initialized BaseStore instance.
+        query (str | None): Optional natural-language query used for semantic
+            search. Defaults to None (full scan).
+        limit (int): Maximum number of memories to return. Defaults to 5.
 
     Returns:
         str:
-            - A formatted string of all retrieved memories, or a placeholder if none exist.
+            - A formatted string of retrieved memories, or a placeholder if none exist.
 
     Raises:
         MyException: If retrieving memories fails.
@@ -74,15 +73,16 @@ def get_memories(namespace: Tuple[str, str], store: PostgresStore) -> str:
     try:
         logging.info(f"Fetching memories for namespace: {namespace}...")
 
-        items: List[Item] = store.search(namespace=namespace)
+        search_kwargs: dict = {"limit": limit}
+        if query:
+            search_kwargs["query"] = query
+
+        items: List[SearchItem] = store.search(namespace, **search_kwargs)
         if not items:
             logging.info(f"No memories found for namespace: {namespace}.")
             return "No memories available."
 
-        memories: str = "\n".join(
-            f"{item.key}: {item.value['text']} ({item.value['importance']})"
-            for item in items
-        )
+        memories: str = "\n".join(f"{item.key}: {item.value['text']} ({item.value['importance']})" for item in items)
 
         logging.info(f"Fetched memories for namespace: {namespace}.")
         return memories

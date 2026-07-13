@@ -7,13 +7,16 @@ LLM:
   max_output_tokens: 3000
 
 MAX_TOKENS: 8000
+MEMORY_SEARCH_K: 5
+
 RETRIEVER:
   search_type: similarity
   search_args:
     k: 4
 
 EMBEDDINGS:
-  model: gemini-embedding-001
+  model: models/gemini-embedding-2
+  output_dimensionality: 768
 
 INGESTION_PIPELINE:
   chunk_size: 1000

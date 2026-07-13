@@ -29,9 +29,7 @@ try:
     }
 
     PARAMS_CONFIGS = yaml.safe_load((ROOT_DIR / "configs/params.yaml").read_text())
-    VECTOR_DB_PATH = str(
-        ROOT_DIR / PARAMS_CONFIGS.get("FILES", {}).get("VECTOR_DB_PATH", "")
-    )
+    VECTOR_DB_PATH = str(ROOT_DIR / PARAMS_CONFIGS.get("FILES", {}).get("VECTOR_DB_PATH", ""))
 
 except Exception as e:
     raise MyException(e, sys) from e
@@ -55,23 +53,17 @@ def get_retriever(thread_id: str) -> VectorStoreRetriever:
         logging.info(f"Configuring retriever for thread {thread_id}...")
         if thread_id in st.session_state["retrievers"]:
             res = st.session_state["retrievers"].get(thread_id, {})
-            logging.info(
-                f"Retriever configuration loaded from session for thread {thread_id}."
-            )
+            logging.info(f"Retriever configuration loaded from session for thread {thread_id}.")
             return res
 
-        embeddings: GoogleGenerativeAIEmbeddings = get_embeddings(
-            params=PARAMS_CONFIGS.get("EMBEDDINGS", {})
-        )
+        embeddings: GoogleGenerativeAIEmbeddings = get_embeddings(params=PARAMS_CONFIGS.get("EMBEDDINGS", {}))
         vector_store: Chroma = Chroma(
             collection_name=thread_id,
             embedding_function=embeddings,
             persist_directory=VECTOR_DB_PATH,
         )
 
-        retriever: VectorStoreRetriever = vector_store.as_retriever(
-            **PARAMS_CONFIGS.get("RETRIEVER", {})
-        )
+        retriever: VectorStoreRetriever = vector_store.as_retriever(**PARAMS_CONFIGS.get("RETRIEVER", {}))
         st.session_state["retrievers"][thread_id] = retriever
 
         logging.info(f"Retriever configured for thread {thread_id}.")
@@ -83,9 +75,7 @@ def get_retriever(thread_id: str) -> VectorStoreRetriever:
 
 
 @traceable(name="ingestion_pipeline")
-def ingestion_pipeline(
-    filepath: str, chunk_size: int, chunk_overlap: int
-) -> Dict[str, Any]:
+def ingestion_pipeline(filepath: str, chunk_size: int, chunk_overlap: int) -> Dict[str, Any]:
     """
     Processes and ingests a document into the vector store.
 
@@ -108,7 +98,7 @@ def ingestion_pipeline(
         ext: str = Path(filepath).suffix.lower()
 
         if ext == ".pdf":
-            loader: PyPDFLoader = PyPDFLoader(file_path=filepath)
+            loader: Any = PyPDFLoader(file_path=filepath)
             docs: list[Document] = loader.load()
             splitter: RecursiveCharacterTextSplitter = RecursiveCharacterTextSplitter(
                 chunk_size=chunk_size,
@@ -133,9 +123,7 @@ def ingestion_pipeline(
                 )
 
         chunks: list[Document] = splitter.split_documents(documents=docs)
-        embeddings: GoogleGenerativeAIEmbeddings = get_embeddings(
-            params=PARAMS_CONFIGS.get("EMBEDDINGS", {})
-        )
+        embeddings: GoogleGenerativeAIEmbeddings = get_embeddings(params=PARAMS_CONFIGS.get("EMBEDDINGS", {}))
 
         try:
             client: chromadb.ClientAPI = chromadb.PersistentClient(path=VECTOR_DB_PATH)
@@ -151,9 +139,7 @@ def ingestion_pipeline(
             collection_name=current_thread,
         )
 
-        retriever: VectorStoreRetriever = vector_store.as_retriever(
-            **PARAMS_CONFIGS.get("RETRIEVER", {})
-        )
+        retriever: VectorStoreRetriever = vector_store.as_retriever(**PARAMS_CONFIGS.get("RETRIEVER", {}))
 
         st.session_state["retrievers"][current_thread] = retriever
         st.session_state["metadatas"][current_thread] = {
