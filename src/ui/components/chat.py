@@ -7,7 +7,6 @@ from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage, Too
 from langchain_core.runnables.config import RunnableConfig
 from langgraph.types import Command, StateSnapshot
 from langsmith import RunTree, get_current_run_tree, traceable
-
 from src.core.capabilities.title_gen import generate_title
 from src.core.workflow.graph import workflow
 from src.exception import MyException

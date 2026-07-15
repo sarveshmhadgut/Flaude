@@ -7,7 +7,6 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables.base import Runnable, RunnableSerializable
 from langchain_google_genai import ChatGoogleGenerativeAI
-
 from src.core.capabilities.memory import DecisionSchema
 from src.core.tools import available_tools
 from src.exception import MyException

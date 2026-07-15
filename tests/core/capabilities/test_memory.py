@@ -1,7 +1,6 @@
 from unittest.mock import MagicMock
 
 from langgraph.store.base import SearchItem
-
 from src.core.capabilities.memory import get_memories, get_namespace
 
 

@@ -2,12 +2,11 @@ import os
 import sqlite3
 import sys
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
 
 import yaml
 from langchain_core.runnables import RunnableConfig
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
-
 from src.exception import MyException
 from src.logger import logging
 

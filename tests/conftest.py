@@ -13,15 +13,17 @@ os.environ["DB_NAME"] = "test_db"
 os.environ["DB_URI"] = "postgresql://postgresql:postgresql@localhost:5432/postgresql"
 
 from unittest.mock import MagicMock
-import psycopg_pool
+
 import langgraph.checkpoint.postgres
 import langgraph.store.postgres
+import psycopg_pool
 
 # Prevent DB connection during test collection module imports
 psycopg_pool.ConnectionPool = MagicMock()
 langgraph.checkpoint.postgres.PostgresSaver.setup = MagicMock()
 langgraph.checkpoint.postgres.PostgresSaver.list = MagicMock(return_value=[])
 langgraph.store.postgres.PostgresStore.setup = MagicMock()
+
 
 @pytest.fixture(autouse=True)
 def mock_env_vars(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -35,4 +37,6 @@ def mock_env_vars(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("DB_HOST", "localhost")
     monkeypatch.setenv("DB_PORT", "5432")
     monkeypatch.setenv("DB_NAME", "test_db")
-    monkeypatch.setenv("DB_URI", "postgresql://postgresql:postgresql@localhost:5432/postgresql")
+    monkeypatch.setenv(
+        "DB_URI", "postgresql://postgresql:postgresql@localhost:5432/postgresql"
+    )

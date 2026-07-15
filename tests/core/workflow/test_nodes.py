@@ -2,14 +2,20 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from langchain_core.messages import AIMessage, HumanMessage
-
 from src.core.workflow.nodes import approve_tools, chat, summarize
 
 
 def test_approve_tools() -> None:
     """Test that the approve_tools node correctly interrupts the graph."""
     # Simulate tool request state
-    state = {"messages": [AIMessage(content="Need approval", tool_calls=[{"name": "web_search", "args": {}, "id": "call_67"}])]}
+    state = {
+        "messages": [
+            AIMessage(
+                content="Need approval",
+                tool_calls=[{"name": "web_search", "args": {}, "id": "call_67"}],
+            )
+        ]
+    }
     config = {"configurable": {"thread_id": "thread_67"}}
 
     # Node should interrupt for human approval
@@ -35,7 +41,9 @@ def test_chat_node() -> None:
     # Mock dependencies to isolate chat node
     with (
         patch("src.core.workflow.nodes.CHAT_CHAIN", mock_chain),
-        patch("src.core.workflow.nodes.get_namespace", return_value=("user_id", "user_67")),
+        patch(
+            "src.core.workflow.nodes.get_namespace", return_value=("user_id", "user_67")
+        ),
         patch("src.core.workflow.nodes.get_memories", return_value="some memory"),
     ):
         # Mock session state for RAG checks
@@ -56,7 +64,10 @@ def test_summarize() -> None:
     mock_chain.invoke.return_value = "This is a summary"
 
     # Mock summary chain and force high token count
-    with patch("src.core.workflow.nodes.SUMMARY_CHAIN", mock_chain), patch("src.core.workflow.nodes.count_tokens_approximately", return_value=8500):
+    with (
+        patch("src.core.workflow.nodes.SUMMARY_CHAIN", mock_chain),
+        patch("src.core.workflow.nodes.count_tokens_approximately", return_value=8500),
+    ):
         result = summarize(state, config, mock_store)
 
         assert hasattr(result, "update") or result is not None

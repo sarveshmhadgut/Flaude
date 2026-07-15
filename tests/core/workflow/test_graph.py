@@ -2,7 +2,6 @@ from unittest.mock import MagicMock
 
 from langgraph.checkpoint.postgres import PostgresSaver
 from langgraph.graph.state import CompiledStateGraph
-
 from src.core.workflow.graph import compile_workflow
 
 

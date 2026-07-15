@@ -7,7 +7,6 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables.base import RunnableSerializable
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langsmith import traceable
-
 from src.exception import MyException
 from src.infra.config import ROOT_DIR, get_llm
 from src.infra.database import save_row

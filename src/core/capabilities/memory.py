@@ -4,7 +4,6 @@ from typing import List, Tuple
 import yaml
 from langgraph.store.base import BaseStore, SearchItem
 from pydantic import BaseModel, Field
-
 from src.exception import MyException
 from src.infra.config import ROOT_DIR
 from src.logger import logging

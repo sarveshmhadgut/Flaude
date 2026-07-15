@@ -5,7 +5,6 @@ from typing import Any, Dict, List
 
 import streamlit as st
 import yaml
-
 from src.core.capabilities.rag import ingestion_pipeline
 from src.core.workflow.graph import checkpointer
 from src.exception import MyException

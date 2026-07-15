@@ -6,7 +6,6 @@ from langchain_chroma import Chroma
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.vectorstores.base import VectorStoreRetriever
 from langgraph.types import StateSnapshot
-
 from src.core.capabilities.rag import get_retriever
 from src.core.workflow.graph import workflow
 from src.exception import MyException

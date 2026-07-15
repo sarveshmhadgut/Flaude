@@ -12,7 +12,6 @@ from langchain_core.vectorstores.base import VectorStoreRetriever
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_text_splitters import Language, RecursiveCharacterTextSplitter
 from langsmith import traceable
-
 from src.exception import MyException
 from src.infra.config import ROOT_DIR, get_embeddings
 from src.logger import logging
