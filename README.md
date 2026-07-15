@@ -81,7 +81,7 @@ Flaude/
 Clone the repo and install everything with `uv`:
 
 ```bash
-git clone <your-repo-url>
+git clone
 cd Flaude
 uv sync
 ```
