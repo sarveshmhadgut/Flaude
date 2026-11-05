@@ -2,11 +2,12 @@ import os
 import sqlite3
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import yaml
 from langchain_core.runnables import RunnableConfig
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+
 from src.exception import MyException
 from src.logger import logging
 
@@ -51,7 +52,7 @@ def load_css(filepath: Path) -> str:
         raise MyException(e, sys) from e
 
 
-def get_llm(params: Dict[str, Any]) -> ChatGoogleGenerativeAI:
+def get_llm(params: dict[str, Any]) -> ChatGoogleGenerativeAI:
     """
     Initializes and returns the ChatGoogleGenerativeAI instance.
 
@@ -77,7 +78,7 @@ def get_llm(params: Dict[str, Any]) -> ChatGoogleGenerativeAI:
         raise MyException(e, sys) from e
 
 
-def get_embeddings(params: Dict[str, Any]) -> GoogleGenerativeAIEmbeddings:
+def get_embeddings(params: dict[str, Any]) -> GoogleGenerativeAIEmbeddings:
     """
     Initializes and returns the GoogleGenerativeAIEmbeddings instance.
 

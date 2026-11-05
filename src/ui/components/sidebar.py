@@ -1,11 +1,12 @@
 import sys
-from typing import Any, Dict, List, cast
+from typing import Any, cast
 
 import streamlit as st
 from langchain_chroma import Chroma
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.vectorstores.base import VectorStoreRetriever
 from langgraph.types import StateSnapshot
+
 from src.core.capabilities.rag import get_retriever
 from src.core.workflow.graph import workflow
 from src.exception import MyException
@@ -13,7 +14,7 @@ from src.infra.config import get_runnable_config
 from src.logger import logging
 
 
-def load_conversation_history(thread_id: str) -> List[Any]:
+def load_conversation_history(thread_id: str) -> list[Any]:
     """
     Loads the message history for a specific conversation thread.
 
@@ -71,7 +72,7 @@ def render_conversations() -> None:
             ):
                 logging.info(f"Switching to conversation thread: {thread}...")
                 st.session_state["current_thread"] = thread
-                conversation_history: List = load_conversation_history(
+                conversation_history: list = load_conversation_history(
                     thread_id=st.session_state["current_thread"]
                 )
 
@@ -87,7 +88,7 @@ def render_conversations() -> None:
                     )
                     filepath: str = metadata.get("source", "Unknown Document")
                     st.session_state["metadatas"][thread] = {"filepath": filepath}
-                previous_messages: List[Dict[str, Any]] = []
+                previous_messages: list[dict[str, Any]] = []
 
                 for message in conversation_history:
                     if isinstance(message, HumanMessage):

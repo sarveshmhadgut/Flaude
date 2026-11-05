@@ -2,6 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from langchain_core.messages import AIMessage, HumanMessage
+
 from src.core.workflow.nodes import approve_tools, chat, summarize
 
 

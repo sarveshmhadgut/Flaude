@@ -1,5 +1,6 @@
 import sys
-from typing import Any, Dict, Generator, List, Literal, Optional, Tuple
+from collections.abc import Generator
+from typing import Any, Literal
 from uuid import uuid1
 
 import streamlit as st
@@ -7,6 +8,7 @@ from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage, Too
 from langchain_core.runnables.config import RunnableConfig
 from langgraph.types import Command, StateSnapshot
 from langsmith import RunTree, get_current_run_tree, traceable
+
 from src.core.capabilities.title_gen import generate_title
 from src.core.workflow.graph import workflow
 from src.exception import MyException
@@ -15,7 +17,7 @@ from src.infra.database import save_file
 from src.logger import logging
 
 
-def display_messages(messages: List[Dict[str, Any]]) -> None:
+def display_messages(messages: list[dict[str, Any]]) -> None:
     """
     Renders a list of chat messages to the Streamlit UI.
 
@@ -47,11 +49,11 @@ def display_messages(messages: List[Dict[str, Any]]) -> None:
 
 
 def stream_chat(
-    user_input: Optional[str],
+    user_input: str | None,
     config: RunnableConfig,
     stream_mode: Literal["messages", "values", "updates", "custom"] = "messages",
-    status_holder: Optional[Dict[str, Any]] = None,
-    resume: Optional[str] = None,
+    status_holder: dict[str, Any] | None = None,
+    resume: str | None = None,
 ) -> Generator[str, None, None]:
     """
     Streams chunks of AI responses from the LangGraph workflow.
@@ -72,7 +74,7 @@ def stream_chat(
     """
     try:
         logging.info("Executing stream_chat...")
-        input_data: Command[Tuple] | Dict[str, List[HumanMessage]] = (
+        input_data: Command[tuple] | dict[str, list[HumanMessage]] = (
             Command(resume=resume)
             if resume is not None
             else {
@@ -129,9 +131,9 @@ def stream_chat(
 
 @traceable(name="flaude_run")
 def handle_input(
-    user_input: Optional[str],
-    files: Optional[List[Any]] = None,
-    resume: Optional[str] = None,
+    user_input: str | None,
+    files: list[Any] | None = None,
+    resume: str | None = None,
 ) -> bool:
     """
     Processes the user input, manages file uploads, and orchestrates the chat flow.
@@ -153,7 +155,7 @@ def handle_input(
         need_rerun = False
 
         if files:
-            file = files[0] if isinstance(files, List) else files
+            file = files[0] if isinstance(files, list) else files
 
             with st.chat_message("assistant"):
                 save_file(file)
@@ -190,8 +192,8 @@ def handle_input(
         )
 
         with st.chat_message("assistant"):
-            tool_block: Dict[str, Any] = {"box": None}
-            ai_message: List[Any] | str = st.write_stream(
+            tool_block: dict[str, Any] = {"box": None}
+            ai_message: list[Any] | str = st.write_stream(
                 stream_chat(
                     user_input=user_input,
                     config=config,

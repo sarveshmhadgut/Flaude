@@ -1,9 +1,9 @@
 import sys
-from typing import List, Tuple
 
 import yaml
 from langgraph.store.base import BaseStore, SearchItem
 from pydantic import BaseModel, Field
+
 from src.exception import MyException
 from src.infra.config import ROOT_DIR
 from src.logger import logging
@@ -27,12 +27,12 @@ class DecisionSchema(BaseModel):
     update_memory: bool = Field(
         description=PARAMS_CONFIGS.get("DecisionSchema", {}).get("UPDATE_MEMORY")
     )
-    memories: List[MemorySchema] = Field(
+    memories: list[MemorySchema] = Field(
         description=PARAMS_CONFIGS.get("DecisionSchema", {}).get("MEMORIES")
     )
 
 
-def get_namespace(user_id: str) -> Tuple[str, str]:
+def get_namespace(user_id: str) -> tuple[str, str]:
     """
     Constructs the memory namespace for a specific user.
 
@@ -47,7 +47,7 @@ def get_namespace(user_id: str) -> Tuple[str, str]:
         MyException: If constructing the namespace fails.
     """
     try:
-        res: Tuple[str, str] = ("user_id", user_id)
+        res: tuple[str, str] = ("user_id", user_id)
         return res
 
     except Exception as e:
@@ -55,7 +55,7 @@ def get_namespace(user_id: str) -> Tuple[str, str]:
 
 
 def get_memories(
-    namespace: Tuple[str, str],
+    namespace: tuple[str, str],
     store: BaseStore,
     query: str | None = None,
     limit: int = 5,
@@ -87,7 +87,7 @@ def get_memories(
         if query:
             search_kwargs["query"] = query
 
-        items: List[SearchItem] = store.search(namespace, **search_kwargs)
+        items: list[SearchItem] = store.search(namespace, **search_kwargs)
         if not items:
             logging.info(f"No memories found for namespace: {namespace}.")
             return "No memories available."

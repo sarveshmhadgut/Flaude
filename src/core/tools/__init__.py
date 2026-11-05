@@ -13,7 +13,7 @@ try:
     from .rag import rag_tool
     from .web import get_conversion_rate, web_search
 
-    available_tools: List[BaseTool] = [
+    available_tools: list[BaseTool] = [
         math_eval,
         web_search,
         file_search,

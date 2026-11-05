@@ -1,5 +1,5 @@
 import sys
-from typing import Any, Dict
+from typing import Any
 
 from langchain_core.tools import tool
 from sympy import Basic, sympify
@@ -9,7 +9,7 @@ from src.logger import logging
 
 
 @tool(name_or_callable="math_eval")
-def math_eval(expression: str) -> Dict[str, Any]:
+def math_eval(expression: str) -> dict[str, Any]:
     """
     Evaluates a mathematical expression using sympy.
 

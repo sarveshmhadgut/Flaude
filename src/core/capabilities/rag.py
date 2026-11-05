@@ -1,6 +1,6 @@
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import chromadb
 import streamlit as st
@@ -12,12 +12,13 @@ from langchain_core.vectorstores.base import VectorStoreRetriever
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_text_splitters import Language, RecursiveCharacterTextSplitter
 from langsmith import traceable
+
 from src.exception import MyException
 from src.infra.config import ROOT_DIR, get_embeddings
 from src.logger import logging
 
 try:
-    LANGUAGE_MAP: Dict[str, Language] = {
+    LANGUAGE_MAP: dict[str, Language] = {
         ".md": Language.MARKDOWN,
         ".py": Language.PYTHON,
         ".java": Language.JAVA,
@@ -84,7 +85,7 @@ def get_retriever(thread_id: str) -> VectorStoreRetriever:
 @traceable(name="ingestion_pipeline")
 def ingestion_pipeline(
     filepath: str, chunk_size: int, chunk_overlap: int
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Processes and ingests a document into the vector store.
 

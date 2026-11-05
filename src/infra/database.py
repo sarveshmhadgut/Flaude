@@ -1,10 +1,11 @@
 import os
 import sys
 from sqlite3 import Connection, Cursor
-from typing import Any, Dict, List
+from typing import Any
 
 import streamlit as st
 import yaml
+
 from src.core.capabilities.rag import ingestion_pipeline
 from src.core.workflow.graph import checkpointer
 from src.exception import MyException
@@ -20,7 +21,7 @@ except Exception as e:
     raise MyException(e, sys) from e
 
 
-def load_conversations() -> List[str]:
+def load_conversations() -> list[str]:
     """
     Loads a list of available conversation thread IDs from the database.
 
@@ -35,7 +36,7 @@ def load_conversations() -> List[str]:
     try:
         logging.info("Retrieving conversation history from database...")
 
-        threads: List[str] = list(
+        threads: list[str] = list(
             {
                 checkpoint.config["configurable"]["thread_id"]
                 for checkpoint in checkpointer.list(None)
@@ -50,7 +51,7 @@ def load_conversations() -> List[str]:
         raise MyException(e, sys) from e
 
 
-def load_thread_mapping() -> Dict[str, str]:
+def load_thread_mapping() -> dict[str, str]:
     """
     Loads a mapping of thread IDs to their generated titles.
 
@@ -71,7 +72,7 @@ def load_thread_mapping() -> Dict[str, str]:
 
         cursor.execute(PROMPTS_CONFIGS.get("CREATE_TABLE"))
         cursor.execute(PROMPTS_CONFIGS.get("LOAD_ROWS"))
-        thread_mappings: Dict[str, str] = dict(cursor.fetchall())
+        thread_mappings: dict[str, str] = dict(cursor.fetchall())
 
         conn.commit()
         logging.info("Thread mappings retrieved.")
@@ -141,7 +142,7 @@ def save_file(file: Any) -> None:
                 f.write(file.getbuffer())
 
             with st.status(f"Processing `{file.name}` ...", expanded=True) as status:
-                results: Dict[str, Any] = ingestion_pipeline(
+                results: dict[str, Any] = ingestion_pipeline(
                     filepath=str(filepath),
                     **PARAMS_CONFIGS.get("INGESTION_PIPELINE", {}),
                 )

@@ -1,6 +1,6 @@
 import sys
 from datetime import datetime
-from typing import Any, Dict, List, Literal, Tuple
+from typing import Any, Literal
 
 import streamlit as st
 from langchain_core.messages import AIMessage, HumanMessage, RemoveMessage
@@ -28,7 +28,7 @@ from src.logger import logging
 @traceable(name="memory")
 def memory(
     state: MessagesState, config: RunnableConfig, store: BaseStore
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Executes the memory module to fetch and decide if memories need updating.
 
@@ -47,7 +47,7 @@ def memory(
     try:
         logging.info("Executing memory module...")
         user_id: str = config["configurable"]["user_id"]
-        namespace: Tuple[str, str] = get_namespace(user_id=user_id)
+        namespace: tuple[str, str] = get_namespace(user_id=user_id)
 
         recent_message: Any = next(
             message.content
@@ -98,7 +98,7 @@ def memory(
 @traceable(name="chat")
 def chat(
     state: MessagesState, config: RunnableConfig, store: BaseStore
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Executes the main chat logic, sending context and history to the LLM.
 
@@ -120,7 +120,7 @@ def chat(
         thread_id: str = config["configurable"]["thread_id"]
         user_id: str = config["configurable"]["user_id"]
 
-        namespace: Tuple[str, str] = get_namespace(user_id=user_id)
+        namespace: tuple[str, str] = get_namespace(user_id=user_id)
         recent_message: str = str(
             next(
                 message.content
@@ -137,7 +137,7 @@ def chat(
 
         active_file = "None"
         if thread_id in st.session_state.get("metadatas", {}):
-            metadata: Dict[str, Any] = st.session_state["metadatas"][thread_id]
+            metadata: dict[str, Any] = st.session_state["metadatas"][thread_id]
             if "filepath" in metadata:
                 active_file = metadata["filepath"].split("/")[-1]
 
@@ -189,7 +189,7 @@ def approve_tools(
             if isinstance(message, AIMessage)
         )
 
-        required_tools: List[str] = [
+        required_tools: list[str] = [
             tool_call["name"] for tool_call in recent_message.tool_calls
         ]
         approved = interrupt(
@@ -219,7 +219,7 @@ def approve_tools(
 @traceable(name="summarize")
 def summarize(
     state: MessagesState, config: RunnableConfig, store: BaseStore
-) -> Command[Tuple]:
+) -> Command[tuple]:
     """
     Summarizes older messages in the conversation to conserve context length.
 

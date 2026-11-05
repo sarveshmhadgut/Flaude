@@ -1,6 +1,6 @@
 import os
 import sys
-from typing import Any, Dict
+from typing import Any
 
 import requests
 from dotenv import load_dotenv
@@ -19,7 +19,7 @@ except Exception as e:
 
 
 @tool(name_or_callable="web_search")
-def web_search(search_query: str) -> Dict[str, Any]:
+def web_search(search_query: str) -> dict[str, Any]:
     """
     Search the web for information related to a query.
 
@@ -52,7 +52,7 @@ def web_search(search_query: str) -> Dict[str, Any]:
 
 
 @tool(name_or_callable="get_conversion_rate")
-def get_conversion_rate(base_currency: str, target_currency: str) -> Dict[str, Any]:
+def get_conversion_rate(base_currency: str, target_currency: str) -> dict[str, Any]:
     """
     Fetches real-time, up-to-date currency exchange rates for a currency pair.
 
@@ -79,7 +79,7 @@ def get_conversion_rate(base_currency: str, target_currency: str) -> Dict[str, A
         res: requests.Response = requests.get(url=URL, timeout=10)
         res.raise_for_status()
 
-        data: Dict[str, Any] = res.json()
+        data: dict[str, Any] = res.json()
         if data["result"] != "success":
             raise ValueError(data.get("error-type", "Unknown API error"))
 

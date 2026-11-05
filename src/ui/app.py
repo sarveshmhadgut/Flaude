@@ -1,7 +1,7 @@
 # imports & setups
 import os
 import sys
-from typing import Any, List, Optional
+from typing import Any
 
 import streamlit as st
 import yaml
@@ -62,7 +62,7 @@ try:
 
     # approval UI
     if st.session_state.get("awaiting_approval", False):
-        required_tools: List[Any] = st.session_state.get("required_tools", [])
+        required_tools: list[Any] = st.session_state.get("required_tools", [])
         if required_tools:
             st.write(
                 f"The model requires tool approval before continuing. Required tools: `{', '.join(required_tools)}`"
@@ -97,7 +97,7 @@ try:
             text = str(user_input)
 
         try:
-            files: Optional[List[UploadedFile]] = user_input.files
+            files: list[UploadedFile] | None = user_input.files
         except AttributeError:
             files = None
 

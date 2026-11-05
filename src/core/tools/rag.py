@@ -1,5 +1,5 @@
 import sys
-from typing import Any, Dict
+from typing import Any
 
 import yaml
 from langchain_chroma import Chroma
@@ -23,7 +23,7 @@ except Exception as e:
 
 
 @tool(name_or_callable="rag")
-def rag_tool(query: str, config: RunnableConfig) -> Dict[str, Any]:
+def rag_tool(query: str, config: RunnableConfig) -> dict[str, Any]:
     """
     Executes a Retrieval-Augmented Generation (RAG) query against the active vector database.
 
@@ -56,7 +56,7 @@ def rag_tool(query: str, config: RunnableConfig) -> Dict[str, Any]:
 
         res: list[Document] = retriever.invoke(input=query)
         content: list[str] = [doc.page_content for doc in res]
-        metadata: list[Dict[Any, Any]] = [doc.metadata for doc in res]
+        metadata: list[dict[Any, Any]] = [doc.metadata for doc in res]
 
         logging.info(f"Finished executing rag_tool for {query}.")
         return {
