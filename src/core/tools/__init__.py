@@ -1,5 +1,4 @@
 import sys
-from typing import List
 
 from langchain_core.tools.base import BaseTool
 

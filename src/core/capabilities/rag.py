@@ -141,7 +141,7 @@ def ingestion_pipeline(
             client: chromadb.ClientAPI = chromadb.PersistentClient(path=VECTOR_DB_PATH)
             client.delete_collection(name=current_thread)
 
-        except Exception as e:
+        except ValueError as e:
             logging.warning(f"Bypassed collection deletion: {e}")
 
         vector_store: Chroma = Chroma.from_documents(

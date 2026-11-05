@@ -243,7 +243,7 @@ def handle_input(
                         "required_tools", []
                     )
 
-                except Exception:
+                except (IndexError, AttributeError, TypeError):
                     st.session_state["required_tools"] = []
 
             need_rerun = True

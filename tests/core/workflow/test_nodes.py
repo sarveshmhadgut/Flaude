@@ -46,12 +46,11 @@ def test_chat_node() -> None:
             "src.core.workflow.nodes.get_namespace", return_value=("user_id", "user_67")
         ),
         patch("src.core.workflow.nodes.get_memories", return_value="some memory"),
+        patch("streamlit.session_state", {}),
     ):
-        # Mock session state for RAG checks
-        with patch("streamlit.session_state", {}):
-            result = chat(state, config, mock_store)
-            assert len(result["messages"]) == 1
-            assert result["messages"][0].content == "Hi there"
+        result = chat(state, config, mock_store)
+        assert len(result["messages"]) == 1
+        assert result["messages"][0].content == "Hi there"
 
 
 def test_summarize() -> None:

@@ -156,7 +156,7 @@ def save_file(file: Any) -> None:
                     try:
                         os.remove(filepath)
 
-                    except Exception as e:
+                    except OSError as e:
                         st.warning(f"Could not delete temporary file: {e}")
 
                 else:

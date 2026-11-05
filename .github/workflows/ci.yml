@@ -1,6 +1,10 @@
 name: CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
 
 jobs:
   check:
@@ -22,10 +26,13 @@ jobs:
         run: uv sync --all-extras --dev
 
       - name: Check code formatting (ruff)
-        run: uvx ruff format --check src/
+        run: uvx ruff format --check src/ tests/
+
+      - name: Check import sorting (ruff)
+        run: uvx ruff check --select I src/ tests/
 
       - name: Lint code (ruff)
-        run: uvx ruff check src/
+        run: uvx ruff check src/ tests/
 
       - name: Type check (mypy)
         run: uvx mypy src --explicit-package-bases --ignore-missing-imports
@@ -35,3 +42,4 @@ jobs:
           GOOGLE_API_KEY: "goofy-ahh-google-key"
           LANGCHAIN_API_KEY: "goofy-ahh-langchain-key"
         run: uv run pytest tests
+
