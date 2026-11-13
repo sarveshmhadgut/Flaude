@@ -31,7 +31,7 @@ def file_search(filename: str) -> dict[str, Any]:
 
         for filepath in current.rglob(filename):
             if filepath.is_file():
-                contents.append(f"{filepath.name}\n{filepath.read_text()}\n")
+                contents.append(f"{filepath.name}\n{filepath.read_text(encoding='utf-8')}\n")
 
         logging.info(f"Finished executing file_search tool for {filename}.")
         return {
@@ -43,3 +43,6 @@ def file_search(filename: str) -> dict[str, Any]:
     except Exception as e:
         logging.error(f"Failed to execute file_search tool: {e}")
         raise MyException(e, sys) from e
+
+
+__all__ = ["file_search"]

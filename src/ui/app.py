@@ -15,7 +15,7 @@ from src.logger import logging
 
 try:
     logging.info("Starting Streamlit application...")
-    PARAMS_CONFIGS = yaml.safe_load((ROOT_DIR / "configs/params.yaml").read_text())
+    PARAMS_CONFIGS = yaml.safe_load((ROOT_DIR / "configs/params.yaml").read_text(encoding="utf-8"))
 
     load_dotenv()
     os.environ["LANGSMITH_PROJECT"] = PARAMS_CONFIGS.get("LANGSMITH_PROJECT", "")

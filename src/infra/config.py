@@ -14,8 +14,8 @@ from src.logger import logging
 ROOT_DIR = Path(__file__).resolve().parent.parent.parent
 
 try:
-    PARAMS_CONFIGS = yaml.safe_load((ROOT_DIR / "configs/params.yaml").read_text())
-    PROMPTS_CONFIGS = yaml.safe_load((ROOT_DIR / "configs/prompts.yaml").read_text())
+    PARAMS_CONFIGS = yaml.safe_load((ROOT_DIR / "configs/params.yaml").read_text(encoding="utf-8"))
+    PROMPTS_CONFIGS = yaml.safe_load((ROOT_DIR / "configs/prompts.yaml").read_text(encoding="utf-8"))
 
 except Exception as e:
     raise MyException(e, sys) from e
@@ -40,7 +40,7 @@ def load_css(filepath: Path) -> str:
         logging.info(f"Loading CSS from {filepath}...")
 
         if filepath.exists():
-            res: str = f"<style>{filepath.read_text()}</style>"
+            res: str = f"<style>{filepath.read_text(encoding='utf-8')}</style>"
             logging.info(f"CSS loaded from {filepath}.")
             return res
 
@@ -177,3 +177,15 @@ def get_runnable_config(thread_id: str, thread_name: str, user_id: str = "defaul
     except Exception as e:
         logging.error(f"Failed to configure run context for thread {thread_id}: {e}")
         raise MyException(e, sys) from e
+
+
+__all__ = [
+    "PARAMS_CONFIGS",
+    "PROMPTS_CONFIGS",
+    "ROOT_DIR",
+    "get_conn",
+    "get_embeddings",
+    "get_llm",
+    "get_runnable_config",
+    "load_css",
+]

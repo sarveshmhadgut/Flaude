@@ -9,8 +9,8 @@ from src.infra.config import ROOT_DIR
 from src.logger import logging
 
 try:
-    PARAMS_CONFIGS = yaml.safe_load((ROOT_DIR / "configs/params.yaml").read_text())
-    PROMPTS_CONFIGS = yaml.safe_load((ROOT_DIR / "configs/prompts.yaml").read_text())
+    PARAMS_CONFIGS = yaml.safe_load((ROOT_DIR / "configs/params.yaml").read_text(encoding="utf-8"))
+    PROMPTS_CONFIGS = yaml.safe_load((ROOT_DIR / "configs/prompts.yaml").read_text(encoding="utf-8"))
 except Exception as e:
     raise MyException(e, sys) from e
 
@@ -86,7 +86,12 @@ def get_memories(
             logging.info(f"No memories found for namespace: {namespace}.")
             return "No memories available."
 
-        memories: str = "\n".join(f"{item.key}: {item.value['text']} ({item.value['importance']})" for item in items)
+        memories: str = "\n".join(
+            f"{item.key}: {item.value.get('text', '')} ({item.value.get('importance', '')})"
+            if isinstance(item.value, dict)
+            else f"{item.key}: {item.value}"
+            for item in items
+        )
 
         logging.info(f"Fetched memories for namespace: {namespace}.")
         return memories
@@ -94,3 +99,6 @@ def get_memories(
     except Exception as e:
         logging.error(f"Failed to fetch memories for namespace: {namespace}: {e}")
         raise MyException(e, sys) from e
+
+
+__all__ = ["DecisionSchema", "MemorySchema", "get_memories", "get_namespace"]

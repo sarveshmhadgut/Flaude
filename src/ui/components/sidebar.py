@@ -77,7 +77,8 @@ def render_conversations() -> None:
 
                 if vector_store._collection.count() > 0:
                     db_data = vector_store.get(limit=1)
-                    metadata = db_data["metadatas"][0] if db_data["metadatas"] and db_data["metadatas"][0] else {}
+                    metadatas = db_data.get("metadatas") or []
+                    metadata = metadatas[0] if metadatas and metadatas[0] else {}
                     filepath: str = metadata.get("source", "Unknown Document")
                     st.session_state["metadatas"][thread] = {"filepath": filepath}
                 previous_messages: list[dict[str, Any]] = []
@@ -123,9 +124,9 @@ def render_active_documents() -> None:
 
         current_thread: str = st.session_state["current_thread"]
         if current_thread in st.session_state.get("metadatas", {}):
-            metadata = st.session_state["metadatas"][current_thread]
+            metadata = st.session_state["metadatas"].get(current_thread, {})
 
-            filename: str = metadata["filepath"].split("/")[-1]
+            filename: str = metadata.get("filepath", "").split("/")[-1]
             st.sidebar.button(
                 filename,
                 icon=":material/description:",
@@ -159,3 +160,11 @@ def render_sidebar() -> None:
     except Exception as e:
         logging.error(f"Error in render_sidebar: {e}")
         raise MyException(e, sys) from e
+
+
+__all__ = [
+    "load_conversation_history",
+    "render_active_documents",
+    "render_conversations",
+    "render_sidebar",
+]

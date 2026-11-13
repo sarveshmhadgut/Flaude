@@ -14,8 +14,8 @@ from src.infra.database import save_row
 from src.logger import logging
 
 try:
-    PARAMS_CONFIGS = yaml.safe_load((ROOT_DIR / "configs/params.yaml").read_text())
-    PROMPTS_CONFIGS = yaml.safe_load((ROOT_DIR / "configs/prompts.yaml").read_text())
+    PARAMS_CONFIGS = yaml.safe_load((ROOT_DIR / "configs/params.yaml").read_text(encoding="utf-8"))
+    PROMPTS_CONFIGS = yaml.safe_load((ROOT_DIR / "configs/prompts.yaml").read_text(encoding="utf-8"))
     load_dotenv()
 
     MODEL: ChatGoogleGenerativeAI = get_llm(params=PARAMS_CONFIGS.get("LLM", {}))
@@ -65,3 +65,6 @@ def generate_title(thread_id: str, conversation_history: str) -> str:
     except Exception as e:
         logging.error(f"Failed to generate title for thread {thread_id}: {e}")
         raise MyException(e, sys) from e
+
+
+__all__ = ["CHAIN", "MODEL", "PARSER", "PROMPT", "generate_title"]

@@ -38,3 +38,6 @@ def math_eval(expression: str) -> dict[str, Any]:
     except Exception as e:
         logging.error(f"Failed to execute math_eval tool : {e}")
         raise MyException(e, sys) from e
+
+
+__all__ = ["math_eval"]

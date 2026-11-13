@@ -38,7 +38,7 @@ Standard LLM wrappers fail in 5 major production areas:
 
 | Component | Technology | Role |
 | :--- | :--- | :--- |
-| **Backend** | Python 3.11+, LangGraph | The agent orchestration engine |
+| **Backend** | Python 3.14+, LangGraph | The agent orchestration engine |
 | **LLM** | Google Gemini (`langchain-google-genai`) | Reasoning, generation, and tool selection |
 | **Memory** | PostgreSQL, SQLite | Persistent session checkpointing |
 | **Vector Store** | Chroma (`langchain-chroma`) | Semantic document retrieval |

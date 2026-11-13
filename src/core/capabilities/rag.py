@@ -28,7 +28,7 @@ try:
         ".html": Language.HTML,
     }
 
-    PARAMS_CONFIGS = yaml.safe_load((ROOT_DIR / "configs/params.yaml").read_text())
+    PARAMS_CONFIGS = yaml.safe_load((ROOT_DIR / "configs/params.yaml").read_text(encoding="utf-8"))
     VECTOR_DB_PATH = str(ROOT_DIR / PARAMS_CONFIGS.get("FILES", {}).get("VECTOR_DB_PATH", ""))
 
 except Exception as e:
@@ -158,3 +158,6 @@ def ingestion_pipeline(filepath: str, chunk_size: int, chunk_overlap: int) -> di
     except Exception as e:
         logging.error(f"Failed to run ingestion pipeline for {filepath}: {e}")
         raise MyException(e, sys) from e
+
+
+__all__ = ["LANGUAGE_MAP", "get_retriever", "ingestion_pipeline"]

@@ -73,3 +73,6 @@ def init_session(load_conversations: Any, load_thread_mapping: Any) -> None:
     except Exception as e:
         logging.error(f"Error in Session State initialization: {e}")
         raise MyException(e, sys) from e
+
+
+__all__ = ["init_session", "new_conversation"]

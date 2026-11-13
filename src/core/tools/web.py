@@ -78,7 +78,7 @@ def get_conversion_rate(base_currency: str, target_currency: str) -> dict[str, A
         res.raise_for_status()
 
         data: dict[str, Any] = res.json()
-        if data["result"] != "success":
+        if data.get("result") != "success":
             raise ValueError(data.get("error-type", "Unknown API error"))
 
         logging.info(f"Finished executing get_conversion_rate tool for {base_currency} -> {target_currency}.")
@@ -86,9 +86,12 @@ def get_conversion_rate(base_currency: str, target_currency: str) -> dict[str, A
             "status": "success",
             "base_currency": base_currency,
             "target_currency": target_currency,
-            "conversion_rate": data["conversion_rate"],
+            "conversion_rate": data.get("conversion_rate"),
         }
 
     except Exception as e:
         logging.error(f"Failed to execute get_conversion_rate tool : {e}")
         raise MyException(e, sys) from e
+
+
+__all__ = ["get_conversion_rate", "web_search"]

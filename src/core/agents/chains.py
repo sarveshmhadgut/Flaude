@@ -14,8 +14,8 @@ from src.exception import MyException
 from src.infra.config import ROOT_DIR, get_llm
 
 try:
-    PARAMS_CONFIGS = yaml.safe_load((ROOT_DIR / "configs/params.yaml").read_text())
-    PROMPTS_CONFIGS = yaml.safe_load((ROOT_DIR / "configs/prompts.yaml").read_text())
+    PARAMS_CONFIGS = yaml.safe_load((ROOT_DIR / "configs/params.yaml").read_text(encoding="utf-8"))
+    PROMPTS_CONFIGS = yaml.safe_load((ROOT_DIR / "configs/prompts.yaml").read_text(encoding="utf-8"))
 
     load_dotenv()
     DB_URI = os.getenv(key="DB_URI")
@@ -28,8 +28,8 @@ try:
     # memory prompt
     MEMORY_PROMPT: ChatPromptTemplate = ChatPromptTemplate(
         [
-            ("system", PROMPTS_CONFIGS["MEMORY"]["SYSTEM"]),
-            ("user", PROMPTS_CONFIGS["MEMORY"]["USER"]),
+            ("system", PROMPTS_CONFIGS.get("MEMORY", {}).get("SYSTEM")),
+            ("user", PROMPTS_CONFIGS.get("MEMORY", {}).get("USER")),
         ]
     )
     MEMORY_MODEL: Runnable = MODEL.with_structured_output(schema=DecisionSchema)
@@ -58,3 +58,19 @@ try:
 
 except Exception as e:
     raise MyException(e, sys) from e
+
+__all__ = [
+    "BOUND_MODEL",
+    "CHAT_CHAIN",
+    "CHAT_PROMPT",
+    "DB_URI",
+    "MEMORY_CHAIN",
+    "MEMORY_MODEL",
+    "MEMORY_PROMPT",
+    "MODEL",
+    "PARAMS_CONFIGS",
+    "PARSER",
+    "PROMPTS_CONFIGS",
+    "SUMMARY_CHAIN",
+    "SUMMARY_PROMPT",
+]

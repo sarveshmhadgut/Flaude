@@ -32,15 +32,17 @@ def display_messages(messages: list[dict[str, Any]]) -> None:
         logging.info("Executing display_messages...")
 
         for message in messages:
-            with st.chat_message(message["role"]):
-                if message["role"] == "user":
+            role: str = message.get("role", "user")
+            content: Any = message.get("content", "")
+            with st.chat_message(role):
+                if role == "user":
                     st.markdown(
-                        f'<div class="user-message">{message["content"]}</div>',
+                        f'<div class="user-message">{content}</div>',
                         unsafe_allow_html=True,
                     )
 
                 else:
-                    st.write(message["content"])
+                    st.write(content)
         logging.info("display_messages execution complete.")
 
     except Exception as e:
@@ -234,7 +236,7 @@ def handle_input(
                     interrupt_val = state.tasks[0].interrupts[0].value
                     st.session_state["required_tools"] = interrupt_val.get("required_tools", [])
 
-                except (IndexError, AttributeError, TypeError):
+                except (IndexError, AttributeError, TypeError):  # fmt: skip
                     st.session_state["required_tools"] = []
 
             need_rerun = True
@@ -257,3 +259,6 @@ def handle_input(
     except Exception as e:
         logging.error(f"Error in handle_input: {e}")
         raise MyException(e, sys) from e
+
+
+__all__ = ["display_messages", "handle_input", "stream_chat"]

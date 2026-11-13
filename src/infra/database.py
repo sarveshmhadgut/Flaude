@@ -13,8 +13,8 @@ from src.infra.config import ROOT_DIR, get_conn
 from src.logger import logging
 
 try:
-    PARAMS_CONFIGS = yaml.safe_load((ROOT_DIR / "configs/params.yaml").read_text())
-    PROMPTS_CONFIGS = yaml.safe_load((ROOT_DIR / "configs/prompts.yaml").read_text())
+    PARAMS_CONFIGS = yaml.safe_load((ROOT_DIR / "configs/params.yaml").read_text(encoding="utf-8"))
+    PROMPTS_CONFIGS = yaml.safe_load((ROOT_DIR / "configs/prompts.yaml").read_text(encoding="utf-8"))
 
 except Exception as e:
     logging.error(f"Failed to load configurations: {e}")
@@ -37,7 +37,11 @@ def load_conversations() -> list[str]:
         logging.info("Retrieving conversation history from database...")
 
         threads: list[str] = list(
-            {checkpoint.config["configurable"]["thread_id"] for checkpoint in checkpointer.list(None)}
+            {
+                checkpoint.config.get("configurable", {}).get("thread_id", "")
+                for checkpoint in checkpointer.list(None)
+                if checkpoint.config.get("configurable", {}).get("thread_id")
+            }
         )
 
         logging.info("Conversation history retrieved.")
@@ -157,3 +161,11 @@ def save_file(file: Any) -> None:
     except Exception as e:
         logging.error(f"Failed to save uploaded file: {e}")
         raise MyException(e, sys) from e
+
+
+__all__ = [
+    "load_conversations",
+    "load_thread_mapping",
+    "save_file",
+    "save_row",
+]

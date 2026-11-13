@@ -47,3 +47,6 @@ class MyException(Exception):
 
         """
         return self.error_message
+
+
+__all__ = ["MyException", "error_message_detail"]

@@ -117,3 +117,6 @@ try:
 except Exception as e:
     logging.error(f"Failed to initialize graph database components: {e}")
     raise MyException(e, sys) from e
+
+
+__all__ = ["compile_workflow", "workflow"]

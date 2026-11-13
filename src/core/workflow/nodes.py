@@ -44,11 +44,11 @@ def memory(state: MessagesState, config: RunnableConfig, store: BaseStore) -> di
     """
     try:
         logging.info("Executing memory module...")
-        user_id: str = config["configurable"]["user_id"]
+        user_id: str = config.get("configurable", {}).get("user_id", "")
         namespace: tuple[str, str] = get_namespace(user_id=user_id)
 
         recent_message: Any = next(
-            message.content for message in reversed(state["messages"]) if isinstance(message, HumanMessage)
+            message.content for message in reversed(state.get("messages", [])) if isinstance(message, HumanMessage)
         )
         current_memories: str = get_memories(
             namespace=namespace,
@@ -111,12 +111,14 @@ def chat(state: MessagesState, config: RunnableConfig, store: BaseStore) -> dict
     try:
         logging.info("Processing chat interaction...")
 
-        thread_id: str = config["configurable"]["thread_id"]
-        user_id: str = config["configurable"]["user_id"]
+        thread_id: str = config.get("configurable", {}).get("thread_id", "")
+        user_id: str = config.get("configurable", {}).get("user_id", "")
 
         namespace: tuple[str, str] = get_namespace(user_id=user_id)
         recent_message: str = str(
-            next(message.content for message in reversed(state["messages"]) if isinstance(message, HumanMessage))
+            next(
+                message.content for message in reversed(state.get("messages", [])) if isinstance(message, HumanMessage)
+            )
         )
         current_memories: str = get_memories(
             namespace=namespace,
@@ -136,7 +138,7 @@ def chat(state: MessagesState, config: RunnableConfig, store: BaseStore) -> dict
                 "messages_summary": state.get("messages_summary", ""),
                 "active_document": active_file,
                 "current_memory": current_memories,
-                "messages": state["messages"],
+                "messages": state.get("messages", []),
             },
             config=config,
             store=store,
@@ -172,10 +174,13 @@ def approve_tools(state: MessagesState, config: RunnableConfig) -> Command[Liter
     try:
         logging.info("Verifying tools execution approvals...")
         recent_message: AIMessage = next(
-            message for message in reversed(state["messages"]) if isinstance(message, AIMessage)
+            message for message in reversed(state.get("messages", [])) if isinstance(message, AIMessage)
         )
 
-        required_tools: list[str] = [tool_call["name"] for tool_call in recent_message.tool_calls]
+        required_tools: list[str] = [
+            tool_call.get("name", "") if isinstance(tool_call, dict) else getattr(tool_call, "name", "")
+            for tool_call in recent_message.tool_calls
+        ]
         approved = interrupt(
             {
                 "type": "approval",
@@ -223,7 +228,7 @@ def summarize(state: MessagesState, config: RunnableConfig, store: BaseStore) ->
 
         updated_summary: str = SUMMARY_CHAIN.invoke(
             input={
-                "messages": state["messages"][-4:],
+                "messages": state.get("messages", [])[-4:],
                 "current_summary": current_summary,
             },
             config=config,
@@ -234,7 +239,7 @@ def summarize(state: MessagesState, config: RunnableConfig, store: BaseStore) ->
         return Command(
             update={
                 "messages_summary": updated_summary,
-                "messages": [RemoveMessage(id=str(message.id)) for message in state["messages"][:-4]],
+                "messages": [RemoveMessage(id=str(message.id)) for message in state.get("messages", [])[:-4]],
             },
             graph=Command.PARENT,
         )
@@ -261,7 +266,7 @@ def route_summary(state: MessagesState) -> Command[Literal["summarize", "__end__
     """
     try:
         logging.info("Evaluating message payload for summarization...")
-        current_tokens: int = count_tokens_approximately(messages=state["messages"])
+        current_tokens: int = count_tokens_approximately(messages=state.get("messages", []))
 
         if current_tokens > PARAMS_CONFIGS.get("MAX_TOKENS", 4000):
             logging.info("Token threshold exceeded; routing to summarization module.")
@@ -275,3 +280,13 @@ def route_summary(state: MessagesState) -> Command[Literal["summarize", "__end__
     except Exception as e:
         logging.error(f"Failed to evaluate summarization requirements: {e}")
         raise MyException(e, sys) from e
+
+
+__all__ = [
+    "approve_tools",
+    "chat",
+    "memory",
+    "route_summary",
+    "summarize",
+    "use_tools",
+]
