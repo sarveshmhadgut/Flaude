@@ -15,9 +15,7 @@ from src.logger import logging
 
 try:
     PARAMS_CONFIGS = yaml.safe_load((ROOT_DIR / "configs/params.yaml").read_text())
-    VECTOR_DB_PATH = str(
-        ROOT_DIR / PARAMS_CONFIGS.get("FILES", {}).get("VECTOR_DB_PATH", "")
-    )
+    VECTOR_DB_PATH = str(ROOT_DIR / PARAMS_CONFIGS.get("FILES", {}).get("VECTOR_DB_PATH", ""))
 except Exception as e:
     raise MyException(e, sys) from e
 
@@ -42,17 +40,13 @@ def rag_tool(query: str, config: RunnableConfig) -> dict[str, Any]:
         logging.info(f"Executing rag_tool for {query}...")
 
         current_thread: str = config["configurable"]["thread_id"]
-        embeddings: GoogleGenerativeAIEmbeddings = get_embeddings(
-            params=PARAMS_CONFIGS.get("EMBEDDINGS", {})
-        )
+        embeddings: GoogleGenerativeAIEmbeddings = get_embeddings(params=PARAMS_CONFIGS.get("EMBEDDINGS", {}))
         vector_store: Chroma = Chroma(
             collection_name=current_thread,
             embedding_function=embeddings,
             persist_directory=VECTOR_DB_PATH,
         )
-        retriever: VectorStoreRetriever = vector_store.as_retriever(
-            **PARAMS_CONFIGS.get("RETRIEVER", {})
-        )
+        retriever: VectorStoreRetriever = vector_store.as_retriever(**PARAMS_CONFIGS.get("RETRIEVER", {}))
 
         res: list[Document] = retriever.invoke(input=query)
         content: list[str] = [doc.page_content for doc in res]

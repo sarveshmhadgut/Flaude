@@ -37,6 +37,4 @@ def mock_env_vars(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("DB_HOST", "localhost")
     monkeypatch.setenv("DB_PORT", "5432")
     monkeypatch.setenv("DB_NAME", "test_db")
-    monkeypatch.setenv(
-        "DB_URI", "postgresql://postgresql:postgresql@localhost:5432/postgresql"
-    )
+    monkeypatch.setenv("DB_URI", "postgresql://postgresql:postgresql@localhost:5432/postgresql")

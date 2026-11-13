@@ -34,9 +34,7 @@ class MyException(Exception):
 
         """
         super().__init__(str(error_message))
-        self.error_message: str = error_message_detail(
-            error_message, error_detail=error_detail
-        )
+        self.error_message: str = error_message_detail(error_message, error_detail=error_detail)
 
     def __str__(self) -> str:
         """

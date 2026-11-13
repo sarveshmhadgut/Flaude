@@ -42,9 +42,7 @@ def test_chat_node() -> None:
     # Mock dependencies to isolate chat node
     with (
         patch("src.core.workflow.nodes.CHAT_CHAIN", mock_chain),
-        patch(
-            "src.core.workflow.nodes.get_namespace", return_value=("user_id", "user_67")
-        ),
+        patch("src.core.workflow.nodes.get_namespace", return_value=("user_id", "user_67")),
         patch("src.core.workflow.nodes.get_memories", return_value="some memory"),
         patch("streamlit.session_state", {}),
     ):

@@ -37,10 +37,7 @@ def load_conversations() -> list[str]:
         logging.info("Retrieving conversation history from database...")
 
         threads: list[str] = list(
-            {
-                checkpoint.config["configurable"]["thread_id"]
-                for checkpoint in checkpointer.list(None)
-            }
+            {checkpoint.config["configurable"]["thread_id"] for checkpoint in checkpointer.list(None)}
         )
 
         logging.info("Conversation history retrieved.")
@@ -65,9 +62,7 @@ def load_thread_mapping() -> dict[str, str]:
     """
     try:
         logging.info("Retrieving thread mappings from database...")
-        conn: Connection = get_conn(
-            db_path=PARAMS_CONFIGS.get("FILES", {}).get("MAPPING_DB_FILEPATH")
-        )
+        conn: Connection = get_conn(db_path=PARAMS_CONFIGS.get("FILES", {}).get("MAPPING_DB_FILEPATH"))
         cursor: Cursor = conn.cursor()
 
         cursor.execute(PROMPTS_CONFIGS.get("CREATE_TABLE"))
@@ -98,9 +93,7 @@ def save_row(thread_id: str, thread_name: str) -> None:
     try:
         logging.info(f"Inserting thread mapping into database for {thread_name}...")
 
-        conn: Connection = get_conn(
-            db_path=PARAMS_CONFIGS.get("FILES", {}).get("MAPPING_DB_FILEPATH")
-        )
+        conn: Connection = get_conn(db_path=PARAMS_CONFIGS.get("FILES", {}).get("MAPPING_DB_FILEPATH"))
         cursor: Cursor = conn.cursor()
 
         cursor.execute(PROMPTS_CONFIGS.get("CREATE_TABLE"))
@@ -131,9 +124,7 @@ def save_file(file: Any) -> None:
     try:
         if file:
             logging.info(f"Saving uploaded file locally: {file.name}...")
-            FILES_DIRPATH = ROOT_DIR / PARAMS_CONFIGS.get("FILES", {}).get(
-                "FILES_DIRNAME", ""
-            )
+            FILES_DIRPATH = ROOT_DIR / PARAMS_CONFIGS.get("FILES", {}).get("FILES_DIRNAME", "")
             FILES_DIRPATH.mkdir(parents=True, exist_ok=True)
 
             filepath = FILES_DIRPATH / file.name
@@ -160,9 +151,7 @@ def save_file(file: Any) -> None:
                         st.warning(f"Could not delete temporary file: {e}")
 
                 else:
-                    status.update(
-                        label=f"Error processing `{file.name}`!", state="error"
-                    )
+                    status.update(label=f"Error processing `{file.name}`!", state="error")
             logging.info(f"File processed and saved: {file.name}.")
 
     except Exception as e:

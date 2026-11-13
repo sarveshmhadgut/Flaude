@@ -26,9 +26,7 @@ from src.logger import logging
 
 
 @traceable(name="memory")
-def memory(
-    state: MessagesState, config: RunnableConfig, store: BaseStore
-) -> dict[str, Any]:
+def memory(state: MessagesState, config: RunnableConfig, store: BaseStore) -> dict[str, Any]:
     """
     Executes the memory module to fetch and decide if memories need updating.
 
@@ -50,9 +48,7 @@ def memory(
         namespace: tuple[str, str] = get_namespace(user_id=user_id)
 
         recent_message: Any = next(
-            message.content
-            for message in reversed(state["messages"])
-            if isinstance(message, HumanMessage)
+            message.content for message in reversed(state["messages"]) if isinstance(message, HumanMessage)
         )
         current_memories: str = get_memories(
             namespace=namespace,
@@ -96,9 +92,7 @@ def memory(
 
 
 @traceable(name="chat")
-def chat(
-    state: MessagesState, config: RunnableConfig, store: BaseStore
-) -> dict[str, Any]:
+def chat(state: MessagesState, config: RunnableConfig, store: BaseStore) -> dict[str, Any]:
     """
     Executes the main chat logic, sending context and history to the LLM.
 
@@ -122,11 +116,7 @@ def chat(
 
         namespace: tuple[str, str] = get_namespace(user_id=user_id)
         recent_message: str = str(
-            next(
-                message.content
-                for message in reversed(state["messages"])
-                if isinstance(message, HumanMessage)
-            )
+            next(message.content for message in reversed(state["messages"]) if isinstance(message, HumanMessage))
         )
         current_memories: str = get_memories(
             namespace=namespace,
@@ -164,9 +154,7 @@ use_tools: ToolNode = ToolNode(tools=available_tools)
 
 
 @traceable(name="approve_tools")
-def approve_tools(
-    state: MessagesState, config: RunnableConfig
-) -> Command[Literal["use_tools", "__end__"]]:
+def approve_tools(state: MessagesState, config: RunnableConfig) -> Command[Literal["use_tools", "__end__"]]:
     """
     Checks for tool calls and interrupts the workflow to ask for explicit user approval.
 
@@ -184,14 +172,10 @@ def approve_tools(
     try:
         logging.info("Verifying tools execution approvals...")
         recent_message: AIMessage = next(
-            message
-            for message in reversed(state["messages"])
-            if isinstance(message, AIMessage)
+            message for message in reversed(state["messages"]) if isinstance(message, AIMessage)
         )
 
-        required_tools: list[str] = [
-            tool_call["name"] for tool_call in recent_message.tool_calls
-        ]
+        required_tools: list[str] = [tool_call["name"] for tool_call in recent_message.tool_calls]
         approved = interrupt(
             {
                 "type": "approval",
@@ -217,9 +201,7 @@ def approve_tools(
 
 
 @traceable(name="summarize")
-def summarize(
-    state: MessagesState, config: RunnableConfig, store: BaseStore
-) -> Command[tuple]:
+def summarize(state: MessagesState, config: RunnableConfig, store: BaseStore) -> Command[tuple]:
     """
     Summarizes older messages in the conversation to conserve context length.
 
@@ -252,10 +234,7 @@ def summarize(
         return Command(
             update={
                 "messages_summary": updated_summary,
-                "messages": [
-                    RemoveMessage(id=str(message.id))
-                    for message in state["messages"][:-4]
-                ],
+                "messages": [RemoveMessage(id=str(message.id)) for message in state["messages"][:-4]],
             },
             graph=Command.PARENT,
         )

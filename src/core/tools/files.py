@@ -37,9 +37,7 @@ def file_search(filename: str) -> dict[str, Any]:
         return {
             "status": "success",
             "filename": filename,
-            "contents": "\n\n".join(contents)
-            if contents
-            else "No matching files found.",
+            "contents": "\n\n".join(contents) if contents else "No matching files found.",
         }
 
     except Exception as e:

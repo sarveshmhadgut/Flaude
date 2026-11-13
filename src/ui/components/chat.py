@@ -54,7 +54,7 @@ def stream_chat(
     stream_mode: Literal["messages", "values", "updates", "custom"] = "messages",
     status_holder: dict[str, Any] | None = None,
     resume: str | None = None,
-) -> Generator[str, None, None]:
+) -> Generator[str]:
     """
     Streams chunks of AI responses from the LangGraph workflow.
 
@@ -62,7 +62,8 @@ def stream_chat(
         user_input (Optional[str]): The text input provided by the user.
         config (RunnableConfig): Configuration dictionary for the LangGraph workflow execution.
         stream_mode (str, optional): The mode of streaming to use. Defaults to "messages".
-        status_holder (Optional[Dict[str, Any]], optional): Dictionary holding the UI status box for tool executions. Defaults to None.
+        status_holder (Optional[Dict[str, Any]], optional): Dictionary holding the UI status box
+            for tool executions. Defaults to None.
         resume (Optional[str], optional): The workflow state ID to resume from. Defaults to None.
 
     Returns:
@@ -101,10 +102,7 @@ def stream_chat(
                 yield (
                     content
                     if isinstance(content, str)
-                    else "".join(
-                        b.get("text", "") if isinstance(b, dict) else str(b)
-                        for b in content
-                    )
+                    else "".join(b.get("text", "") if isinstance(b, dict) else str(b) for b in content)
                     if content
                     else ""
                 )
@@ -112,9 +110,7 @@ def stream_chat(
             if isinstance(message_chunk, ToolMessage) and status_holder is not None:
                 tool_name: str = getattr(message_chunk, "name", "tool")
                 if status_holder.get("box") is None:
-                    status_holder["box"] = st.status(
-                        f"Using `{tool_name}` …", expanded=True
-                    )
+                    status_holder["box"] = st.status(f"Using `{tool_name}` …", expanded=True)
 
                 else:
                     status_holder["box"].update(
@@ -141,7 +137,8 @@ def handle_input(
     Args:
         user_input (Optional[str]): The text input submitted by the user.
         files (Optional[List[Any]], optional): List of uploaded files to process and save. Defaults to None.
-        resume (Optional[str], optional): The state to resume from, if recovering from an interruption. Defaults to None.
+        resume (Optional[str], optional): The state to resume from, if recovering from an interruption.
+            Defaults to None.
 
     Returns:
         bool:
@@ -177,9 +174,7 @@ def handle_input(
                 )
 
         thread_id: str = st.session_state["current_thread"]
-        thread_name: str = st.session_state["thread_mapping"].get(
-            thread_id, f"Conversation {thread_id[:8]}"
-        )
+        thread_name: str = st.session_state["thread_mapping"].get(thread_id, f"Conversation {thread_id[:8]}")
 
         run_tree: RunTree | None = get_current_run_tree()
         if run_tree:
@@ -226,9 +221,7 @@ def handle_input(
                 )
 
         if ai_message:
-            st.session_state["messages"].append(
-                {"role": "assistant", "content": ai_message}
-            )
+            st.session_state["messages"].append({"role": "assistant", "content": ai_message})
 
         state: StateSnapshot = workflow.get_state(config)
         is_interrupted: bool = len(state.tasks) > 0 and bool(state.tasks[0].interrupts)
@@ -239,9 +232,7 @@ def handle_input(
             if is_interrupted:
                 try:
                     interrupt_val = state.tasks[0].interrupts[0].value
-                    st.session_state["required_tools"] = interrupt_val.get(
-                        "required_tools", []
-                    )
+                    st.session_state["required_tools"] = interrupt_val.get("required_tools", [])
 
                 except (IndexError, AttributeError, TypeError):
                     st.session_state["required_tools"] = []
@@ -251,17 +242,13 @@ def handle_input(
         if run_tree:
             run_tree.end(outputs={"ai_response": ai_message})
 
-        if not st.session_state["thread_mapping"].get(
-            st.session_state["current_thread"]
-        ):
+        if not st.session_state["thread_mapping"].get(st.session_state["current_thread"]):
             new_title: str = generate_title(
                 thread_id=st.session_state["current_thread"],
                 conversation_history=st.session_state["messages"][:2],
             )
 
-            st.session_state["thread_mapping"][st.session_state["current_thread"]] = (
-                new_title
-            )
+            st.session_state["thread_mapping"][st.session_state["current_thread"]] = new_title
             need_rerun = True
 
         logging.info("handle_input execution complete.")

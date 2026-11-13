@@ -53,9 +53,7 @@ def generate_title(thread_id: str, conversation_history: str) -> str:
         logging.info(f"Generating title for thread {thread_id}...")
 
         if not conversation_history:
-            logging.info(
-                f"Empty conversation history; skipping title generation for thread {thread_id}."
-            )
+            logging.info(f"Empty conversation history; skipping title generation for thread {thread_id}.")
             return "New Conversation"
 
         res: str = CHAIN.invoke(input={"conversation_history": conversation_history})

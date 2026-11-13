@@ -18,18 +18,12 @@ except Exception as e:
 class MemorySchema(BaseModel):
     key: str = Field(description=PARAMS_CONFIGS.get("MemorySchema", {}).get("KEY"))
     value: str = Field(description=PARAMS_CONFIGS.get("MemorySchema", {}).get("VALUE"))
-    importance: float = Field(
-        description=PARAMS_CONFIGS.get("MemorySchema", {}).get("IMPORTANCE")
-    )
+    importance: float = Field(description=PARAMS_CONFIGS.get("MemorySchema", {}).get("IMPORTANCE"))
 
 
 class DecisionSchema(BaseModel):
-    update_memory: bool = Field(
-        description=PARAMS_CONFIGS.get("DecisionSchema", {}).get("UPDATE_MEMORY")
-    )
-    memories: list[MemorySchema] = Field(
-        description=PARAMS_CONFIGS.get("DecisionSchema", {}).get("MEMORIES")
-    )
+    update_memory: bool = Field(description=PARAMS_CONFIGS.get("DecisionSchema", {}).get("UPDATE_MEMORY"))
+    memories: list[MemorySchema] = Field(description=PARAMS_CONFIGS.get("DecisionSchema", {}).get("MEMORIES"))
 
 
 def get_namespace(user_id: str) -> tuple[str, str]:
@@ -92,10 +86,7 @@ def get_memories(
             logging.info(f"No memories found for namespace: {namespace}.")
             return "No memories available."
 
-        memories: str = "\n".join(
-            f"{item.key}: {item.value['text']} ({item.value['importance']})"
-            for item in items
-        )
+        memories: str = "\n".join(f"{item.key}: {item.value['text']} ({item.value['importance']})" for item in items)
 
         logging.info(f"Fetched memories for namespace: {namespace}.")
         return memories

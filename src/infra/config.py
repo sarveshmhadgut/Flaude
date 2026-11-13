@@ -137,9 +137,7 @@ def get_conn(db_path: str) -> sqlite3.Connection:
 
 
 # runnable
-def get_runnable_config(
-    thread_id: str, thread_name: str, user_id: str = "default_user"
-) -> RunnableConfig:
+def get_runnable_config(thread_id: str, thread_name: str, user_id: str = "default_user") -> RunnableConfig:
     """
     Constructs a LangGraph RunnableConfig object with session metadata.
 
@@ -157,9 +155,7 @@ def get_runnable_config(
     """
 
     try:
-        logging.info(
-            f"Configuring run context for thread {thread_id} and user {user_id}..."
-        )
+        logging.info(f"Configuring run context for thread {thread_id} and user {user_id}...")
         res = RunnableConfig(
             configurable={
                 "thread_id": thread_id,

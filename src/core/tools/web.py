@@ -68,9 +68,7 @@ def get_conversion_rate(base_currency: str, target_currency: str) -> dict[str, A
         MyException: If the API request fails or the key is missing.
     """
     try:
-        logging.info(
-            f"Executing get_conversion_rate tool for {base_currency} -> {target_currency}..."
-        )
+        logging.info(f"Executing get_conversion_rate tool for {base_currency} -> {target_currency}...")
         if not EXCHANGE_RATE_KEY:
             raise ValueError("EXCHANGE_RATE_KEY not found")
 
@@ -83,9 +81,7 @@ def get_conversion_rate(base_currency: str, target_currency: str) -> dict[str, A
         if data["result"] != "success":
             raise ValueError(data.get("error-type", "Unknown API error"))
 
-        logging.info(
-            f"Finished executing get_conversion_rate tool for {base_currency} -> {target_currency}."
-        )
+        logging.info(f"Finished executing get_conversion_rate tool for {base_currency} -> {target_currency}.")
         return {
             "status": "success",
             "base_currency": base_currency,
