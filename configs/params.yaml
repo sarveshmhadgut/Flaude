@@ -11,7 +11,7 @@ MEMORY_SEARCH_K: 5
 
 RETRIEVER:
   search_type: similarity
-  search_args:
+  search_kwargs:
     k: 4
 
 EMBEDDINGS:

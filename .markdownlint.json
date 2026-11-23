@@ -1,0 +1,17 @@
+{
+  "default": true,
+  "MD013": false,
+  "MD033": {
+    "allowed_elements": [
+      "br",
+      "i",
+      "sub",
+      "sup",
+      "code",
+      "p",
+      "div",
+      "span",
+      "nobr"
+    ]
+  }
+}

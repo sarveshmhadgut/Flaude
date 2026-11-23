@@ -11,10 +11,12 @@ from src.logger import logging
 @tool(name_or_callable="file_search")
 def file_search(filename: str) -> dict[str, Any]:
     """
-    Search for a file in the current directory tree and return its contents.
+    Search for a file in the local project workspace directory tree and return its contents.
+    Do NOT use this tool for user-uploaded documents or files mentioned in 'Active Document in RAG Database';
+    user-uploaded files are stored in the vector database and must be queried using the 'rag' tool.
 
     Args:
-        filename (str): Name of the file to locate.
+        filename (str): Name of the file in the local workspace directory to locate.
 
     Returns:
         Dict[str, Any]:

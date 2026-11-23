@@ -23,10 +23,12 @@ except Exception as e:
 @tool(name_or_callable="rag")
 def rag_tool(query: str, config: RunnableConfig) -> dict[str, Any]:
     """
-    Executes a Retrieval-Augmented Generation (RAG) query against the active vector database.
+    Retrieves relevant passages, contents, and information from user-uploaded active documents in the vector database.
+    Use this tool whenever the user asks questions about, requests a summary of, refers to, or wants to extract
+    information from an uploaded document or active file.
 
     Args:
-        query (str): The search query to retrieve information for.
+        query (str): The search query or semantic keywords to retrieve relevant information from the document.
         config (RunnableConfig): Execution configuration containing the thread ID.
 
     Returns:

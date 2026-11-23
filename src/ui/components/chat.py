@@ -175,8 +175,8 @@ def handle_input(
                     unsafe_allow_html=True,
                 )
 
-        thread_id: str = st.session_state["current_thread"]
-        thread_name: str = st.session_state["thread_mapping"].get(thread_id, f"Conversation {thread_id[:8]}")
+        thread_id: str = st.session_state.get("current_thread", "")
+        thread_name: str = st.session_state.get("thread_mapping", {}).get(thread_id, f"Conversation {thread_id[:8]}")
 
         run_tree: RunTree | None = get_current_run_tree()
         if run_tree:
@@ -244,13 +244,15 @@ def handle_input(
         if run_tree:
             run_tree.end(outputs={"ai_response": ai_message})
 
-        if not st.session_state["thread_mapping"].get(st.session_state["current_thread"]):
+        current_thread: str = st.session_state.get("current_thread", "")
+        thread_mapping: dict[str, Any] = st.session_state.get("thread_mapping", {})
+        if current_thread and not thread_mapping.get(current_thread):
             new_title: str = generate_title(
-                thread_id=st.session_state["current_thread"],
-                conversation_history=st.session_state["messages"][:2],
+                thread_id=current_thread,
+                conversation_history=st.session_state.get("messages", [])[:2],
             )
 
-            st.session_state["thread_mapping"][st.session_state["current_thread"]] = new_title
+            st.session_state.setdefault("thread_mapping", {})[current_thread] = new_title
             need_rerun = True
 
         logging.info("handle_input execution complete.")

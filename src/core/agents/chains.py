@@ -39,7 +39,6 @@ try:
     CHAT_PROMPT: ChatPromptTemplate = ChatPromptTemplate(
         [
             ("system", PROMPTS_CONFIGS.get("CHAT", {}).get("SYSTEM")),
-            ("user", PROMPTS_CONFIGS.get("CHAT", {}).get("USER")),
             ("placeholder", "{messages}"),
         ]
     )

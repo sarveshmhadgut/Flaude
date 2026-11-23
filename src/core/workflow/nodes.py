@@ -128,10 +128,12 @@ def chat(state: MessagesState, config: RunnableConfig, store: BaseStore) -> dict
         )
 
         active_file = "None"
-        if thread_id in st.session_state.get("metadatas", {}):
-            metadata: dict[str, Any] = st.session_state["metadatas"][thread_id]
-            if "filepath" in metadata:
-                active_file = metadata["filepath"].split("/")[-1]
+        metadatas: dict[str, Any] = st.session_state.get("metadatas", {})
+        if thread_id in metadatas:
+            metadata: dict[str, Any] = metadatas.get(thread_id, {})
+            filepath: str = metadata.get("filepath", "")
+            if filepath:
+                active_file = filepath.split("/")[-1]
 
         res: AIMessage = CHAT_CHAIN.invoke(
             input={

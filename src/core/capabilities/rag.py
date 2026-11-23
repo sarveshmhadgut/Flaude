@@ -5,6 +5,7 @@ from typing import Any
 import chromadb
 import streamlit as st
 import yaml
+from chromadb.errors import NotFoundError
 from langchain_chroma import Chroma
 from langchain_community.document_loaders import PyPDFLoader, TextLoader
 from langchain_core.documents.base import Document
@@ -51,8 +52,9 @@ def get_retriever(thread_id: str) -> VectorStoreRetriever:
     """
     try:
         logging.info(f"Configuring retriever for thread {thread_id}...")
-        if thread_id in st.session_state["retrievers"]:
-            res = st.session_state["retrievers"].get(thread_id, {})
+        retrievers: dict[str, Any] = st.session_state.get("retrievers", {})
+        if thread_id in retrievers:
+            res = retrievers.get(thread_id, {})
             logging.info(f"Retriever configuration loaded from session for thread {thread_id}.")
             return res
 
@@ -64,7 +66,7 @@ def get_retriever(thread_id: str) -> VectorStoreRetriever:
         )
 
         retriever: VectorStoreRetriever = vector_store.as_retriever(**PARAMS_CONFIGS.get("RETRIEVER", {}))
-        st.session_state["retrievers"][thread_id] = retriever
+        st.session_state.setdefault("retrievers", {})[thread_id] = retriever
 
         logging.info(f"Retriever configured for thread {thread_id}.")
         return retriever
@@ -94,7 +96,7 @@ def ingestion_pipeline(filepath: str, chunk_size: int, chunk_overlap: int) -> di
     try:
         logging.info(f"Starting ingestion pipeline for {filepath}...")
 
-        current_thread: str = st.session_state["current_thread"]
+        current_thread: str = st.session_state.get("current_thread", "")
         ext: str = Path(filepath).suffix.lower()
 
         if ext == ".pdf":
@@ -129,7 +131,7 @@ def ingestion_pipeline(filepath: str, chunk_size: int, chunk_overlap: int) -> di
             client: chromadb.ClientAPI = chromadb.PersistentClient(path=VECTOR_DB_PATH)
             client.delete_collection(name=current_thread)
 
-        except ValueError as e:
+        except (ValueError, NotFoundError) as e:
             logging.warning(f"Bypassed collection deletion: {e}")
 
         vector_store: Chroma = Chroma.from_documents(
@@ -141,8 +143,8 @@ def ingestion_pipeline(filepath: str, chunk_size: int, chunk_overlap: int) -> di
 
         retriever: VectorStoreRetriever = vector_store.as_retriever(**PARAMS_CONFIGS.get("RETRIEVER", {}))
 
-        st.session_state["retrievers"][current_thread] = retriever
-        st.session_state["metadatas"][current_thread] = {
+        st.session_state.setdefault("retrievers", {})[current_thread] = retriever
+        st.session_state.setdefault("metadatas", {})[current_thread] = {
             "filepath": str(filepath),
             "docs": len(docs),
             "chunks": len(chunks),

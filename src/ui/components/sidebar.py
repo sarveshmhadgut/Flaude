@@ -30,7 +30,7 @@ def load_conversation_history(thread_id: str) -> list[Any]:
     """
     try:
         logging.info(f"Executing load_conversation_history for {thread_id}...")
-        thread_name: str = st.session_state["thread_mapping"].get(thread_id, f"Conversation {thread_id[:8]}")
+        thread_name: str = st.session_state.get("thread_mapping", {}).get(thread_id, f"Conversation {thread_id[:8]}")
 
         state: StateSnapshot = workflow.get_state(
             config=get_runnable_config(
@@ -59,8 +59,8 @@ def render_conversations() -> None:
     """
     try:
         logging.info("Executing render_conversations...")
-        for thread in reversed(st.session_state["threads"]):
-            title: str = st.session_state["thread_mapping"].get(thread, "")
+        for thread in reversed(st.session_state.get("threads", [])):
+            title: str = st.session_state.get("thread_mapping", {}).get(thread, "")
 
             if title and st.sidebar.button(
                 title,
@@ -70,7 +70,9 @@ def render_conversations() -> None:
             ):
                 logging.info(f"Switching to conversation thread: {thread}...")
                 st.session_state["current_thread"] = thread
-                conversation_history: list = load_conversation_history(thread_id=st.session_state["current_thread"])
+                conversation_history: list = load_conversation_history(
+                    thread_id=st.session_state.get("current_thread", thread)
+                )
 
                 retriever: VectorStoreRetriever = get_retriever(thread)
                 vector_store = cast(Chroma, retriever.vectorstore)
@@ -80,7 +82,7 @@ def render_conversations() -> None:
                     metadatas = db_data.get("metadatas") or []
                     metadata = metadatas[0] if metadatas and metadatas[0] else {}
                     filepath: str = metadata.get("source", "Unknown Document")
-                    st.session_state["metadatas"][thread] = {"filepath": filepath}
+                    st.session_state.setdefault("metadatas", {})[thread] = {"filepath": filepath}
                 previous_messages: list[dict[str, Any]] = []
 
                 for message in conversation_history:
@@ -122,9 +124,10 @@ def render_active_documents() -> None:
         logging.info("Executing render_active_documents...")
         st.sidebar.header("Active Documents")
 
-        current_thread: str = st.session_state["current_thread"]
-        if current_thread in st.session_state.get("metadatas", {}):
-            metadata = st.session_state["metadatas"].get(current_thread, {})
+        current_thread: str = st.session_state.get("current_thread", "")
+        metadatas: dict[str, Any] = st.session_state.get("metadatas", {})
+        if current_thread in metadatas:
+            metadata: dict[str, Any] = metadatas.get(current_thread, {})
 
             filename: str = metadata.get("filepath", "").split("/")[-1]
             st.sidebar.button(
